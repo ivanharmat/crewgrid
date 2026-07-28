@@ -145,13 +145,102 @@ Set per grid. Page size comes from `config('crewgrid.per_page')`, with a per-pag
 'theme' => 'bootstrap3',
 ```
 
-Markup is rendered from `crewgrid::themes.{theme}` Blade views. Set the theme app-wide in config, or per grid with `public ?string $theme = 'bootstrap3';`. Publish the views to override any markup.
+Markup is rendered from `crewgrid::themes.{theme}` Blade views. Set the theme app-wide in config, or per grid with `public ?string $theme = 'bootstrap5';`. Publish the views to override any markup. An unrecognised theme name throws a named exception rather than a "view not found".
 
 Available themes:
 
-- `bootstrap3` — ✅ available (AdminLTE-friendly)
-- `bootstrap5` — planned
-- `tailwind` — planned
+- `bootstrap3` — AdminLTE-friendly
+- `bootstrap5`
+- `tailwind`
+
+Only the markup differs. Sorting, filters, the column picker, resizing and the width-carrying `<colgroup>` are driven by the component, so every theme behaves identically. The stylesheet and resize script are shared (`crewgrid::assets`); each theme adds only what its framework needs.
+
+### Restyling buttons, inputs and links
+
+Every control the grid renders takes its classes from the theme, and you can override them without publishing a view. App-wide, naming only the keys you want to change:
+
+```php
+// config/crewgrid.php
+'classes' => [
+    'bootstrap5' => ['button' => 'btn btn-primary btn-sm'],
+],
+```
+
+Or per grid:
+
+```php
+public array $classes = ['button' => 'btn btn-danger btn-sm'];
+```
+
+The keys are `button`, `input`, `select`, `link`, `badge` and `action`; defaults live in `CrewGrid\Grid::DEFAULT_CLASSES`. Anything you leave out keeps the theme's default, so there is never a need to restate a whole theme.
+
+**Variants.** Any control takes a dotted suffix, and an unknown one falls back to the base control rather than rendering unstyled:
+
+```php
+$this->uiClass('action.danger');   // the theme's danger action button
+$this->uiClass('action.warning');  // not shipped -> plain 'action', until you define it
+```
+
+So you are not limited to one kind of button. Define as many as you like:
+
+```php
+'classes' => [
+    'tailwind' => [
+        'action.warning' => 'inline-flex items-center rounded bg-amber-500 px-2 py-0.5 text-xs text-white',
+    ],
+],
+```
+
+**Buttons inside cells.** Action buttons in a column are rendered by *your* `format()` callback, so hardcoding `btn btn-xs bg-purple` there ties that grid to Bootstrap 3. `actionLink()` builds a themed, escaped link instead — and because `columns()` is a method on your component, `$this` is available inside the callback:
+
+```php
+Column::make('Links', 'id')
+    ->html()
+    ->format(fn ($value, $row) => $this->actionLink('Estimate', url('estimates/'.$row->estimate_id), 'info'));
+```
+
+Shipped variants are `primary`, `info`, `success` and `danger`, plus the plain `action`. For markup `actionLink()` can't produce (a button with an icon, a `wire:click`), build it yourself and reach for the same classes: `'<button class="'.$this->uiClass('action.danger').'" wire:click="...">'`.
+
+For anything CSS can reach, you don't need either — the grid's own hooks are stable class names: `.crewgrid-table`, `.crewgrid-bordered`, `.crewgrid-th-label`, `.crewgrid-resizer`, `.crewgrid-popover`, `.crewgrid-popover-footer`, `.crewgrid-options`.
+
+Publish the views only when the *markup* has to change (different icons, an extra toolbar control):
+
+```bash
+php artisan vendor:publish --tag=crewgrid-views
+```
+
+Views resolve per file, so delete the ones you didn't mean to own — whatever you keep is frozen at that version and stops receiving updates.
+
+### Tailwind setup
+
+The Tailwind theme uses utility classes, so Tailwind has to be told to scan the package or they will be purged. It needs **two** paths — the Blade views, and the PHP file the control classes live in:
+
+```js
+// tailwind.config.js
+content: [
+    './vendor/ivanharmat/crewgrid/resources/views/**/*.blade.php',
+    './vendor/ivanharmat/crewgrid/src/**/*.php',
+    // ...
+],
+```
+
+The second one is easy to miss. Theme markup is in Blade, but the button, input and `action.*` variant classes are values in `Grid::DEFAULT_CLASSES` — a PHP file the scanner has no reason to look at otherwise. Without it the grid itself renders correctly while every button comes out unstyled.
+
+The alternative, if you would rather not point Tailwind at `vendor/` twice, is to define the classes in your own config, where your scanner already looks:
+
+```php
+// config/crewgrid.php
+'classes' => [
+    'tailwind' => [
+        'button' => 'inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2.5 py-1 text-sm',
+        'action.info' => 'inline-flex items-center rounded bg-purple-600 px-2 py-0.5 text-xs text-white',
+    ],
+],
+```
+
+Config files are not scanned either by default, so add `'./config/crewgrid.php'` to `content` if you take that route — the point is that it is *your* file, in a path you control, rather than one inside `vendor/`.
+
+Table padding, striping, hover and row lines ship as plain CSS with the theme rather than as utilities, so a grid still renders legibly if you get any of this wrong — you'll just get an unstyled toolbar rather than an unreadable page. Icons are Font Awesome class names (`fa fa-filter`), the same as the Bootstrap themes; swap them in a published view if you use a different icon set.
 
 ## URL state
 

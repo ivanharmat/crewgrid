@@ -1,13 +1,13 @@
 <div x-data="crewGridResize({{ $minColumnWidth }})" @pointermove.window="move($event)" @pointerup.window="stop()">
-    @include('crewgrid::themes.bootstrap3.assets')
-    <div class="row" style="margin-bottom: 8px;">
-        <div class="col-sm-4">
+    @include('crewgrid::themes.tailwind.assets')
+    <div class="mb-2 flex flex-wrap items-center gap-2">
+        <div class="w-full sm:w-64">
             @if(collect($columns)->contains(fn ($c) => $c->searchable))
                 <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Search ..." wire:model.live.debounce.400ms="search">
             @endif
         </div>
-        <div class="col-sm-8 text-right">
-            <span wire:loading.delay class="text-muted small" style="margin-right: 8px;">Loading <i class="fa fa-spinner fa-spin"></i></span>
+        <div class="ml-auto flex items-center gap-2">
+            <span wire:loading.delay class="text-sm text-gray-500">Loading <i class="fa fa-spinner fa-spin"></i></span>
             @if($this->hasDraggedWidths())
                 <button type="button" class="{{ $this->uiClass('button') }}" wire:click="resetColumnWidths" title="Reset column widths"><i class="fa fa-arrows-h"></i> Reset Widths</button>
             @endif
@@ -15,21 +15,21 @@
                 <button type="button" class="{{ $this->uiClass('button') }}" @click="open = !open" title="Show or hide columns">
                     <i class="fa fa-columns"></i> Columns
                     @php $hiddenCount = count($pickerColumns) - count($columns); @endphp
-                    @if($hiddenCount > 0)<span class="{{ $this->uiClass('badge') }}">{{ $hiddenCount }}</span>@endif
+                    @if($hiddenCount > 0)
+                        <span class="{{ $this->uiClass('badge') }}">{{ $hiddenCount }}</span>
+                    @endif
                 </button>
                 <div x-show="open" x-cloak class="crewgrid-popover crewgrid-popover-right">
                     @foreach($pickerColumns as $pickerColumn)
-                        <div class="checkbox" wire:key="crewgrid-pick-{{ $pickerColumn->key() }}">
-                            <label>
-                                <input type="checkbox" wire:click="toggleColumn('{{ $pickerColumn->key() }}')" @checked(!$this->isColumnHidden($pickerColumn->key()))>
-                                {{ $pickerColumn->label }}
-                                {{-- A filter on a hidden column still applies - say so, or it
-                                     looks like the grid is dropping rows for no reason. --}}
-                                @if($this->hasActiveFilter($pickerColumn))
-                                    <i class="fa fa-filter text-primary" title="Filtered"></i>
-                                @endif
-                            </label>
-                        </div>
+                        <label class="flex items-center gap-2 whitespace-nowrap py-0.5 text-sm text-gray-700" wire:key="crewgrid-pick-{{ $pickerColumn->key() }}">
+                            <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" wire:click="toggleColumn('{{ $pickerColumn->key() }}')" @checked(!$this->isColumnHidden($pickerColumn->key()))>
+                            {{ $pickerColumn->label }}
+                            {{-- A filter on a hidden column still applies - say so, or it
+                                 looks like the grid is dropping rows for no reason. --}}
+                            @if($this->hasActiveFilter($pickerColumn))
+                                <i class="fa fa-filter text-indigo-600" title="Filtered"></i>
+                            @endif
+                        </label>
                     @endforeach
                     @if($hiddenCount > 0)
                         <div class="crewgrid-popover-footer">
@@ -41,7 +41,7 @@
             @if(!empty($filters) || $search !== '')
                 <button type="button" class="{{ $this->uiClass('button') }}" wire:click="clearFilters"><i class="fa fa-times"></i> Clear Filters</button>
             @endif
-            <select class="{{ $this->uiClass('select') }}" style="width: auto; display: inline-block;" wire:model.live="perPage" title="Rows per page">
+            <select class="{{ $this->uiClass('select') }}" wire:model.live="perPage" title="Rows per page">
                 @foreach($perPageOptions as $option)
                     <option value="{{ $option }}">{{ $option }}</option>
                 @endforeach
@@ -49,8 +49,8 @@
         </div>
     </div>
 
-    <div class="table-responsive" @pointerdown="start($event)">
-        <table class="table table-striped table-hover table-condensed crewgrid-table {{ $this->isBordered() ? 'crewgrid-bordered' : '' }} {{ $this->hasFixedLayout() ? 'crewgrid-fixed' : '' }}">
+    <div class="overflow-x-auto" @pointerdown="start($event)">
+        <table class="w-full text-left text-sm crewgrid-table crewgrid-plain {{ $this->isBordered() ? 'crewgrid-bordered' : '' }} {{ $this->hasFixedLayout() ? 'crewgrid-fixed' : '' }}">
             {{-- Server-rendered, so widths survive a morph and the column set can
                  change when columns are hidden. --}}
             <colgroup>
@@ -62,17 +62,17 @@
             <thead>
                 <tr>
                     @foreach($columns as $column)
-                        <th wire:key="crewgrid-head-{{ $column->key() }}" class="{{ $column->cssClass() }}">
+                        <th wire:key="crewgrid-head-{{ $column->key() }}" class="font-semibold text-gray-700 {{ $column->cssClass() }}">
                             {{-- Only the label truncates. The filter sits outside this
                                  wrapper so its popover is never clipped by the ellipsis. --}}
                             <span class="crewgrid-th-label">
                                 @if($column->sortable)
-                                    <a href="#" wire:click.prevent="sortBy('{{ $column->key() }}')">
+                                    <a href="#" class="hover:underline" wire:click.prevent="sortBy('{{ $column->key() }}')">
                                         {{ $column->label }}
                                         @if($sortField === $column->key())
                                             <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'asc' : 'desc' }}"></i>
                                         @else
-                                            <i class="fa fa-sort text-muted"></i>
+                                            <i class="fa fa-sort text-gray-400"></i>
                                         @endif
                                     </a>
                                 @else
@@ -81,16 +81,11 @@
                             </span>
                             @if(!is_null($column->filterType))
                                 @php
-                                    $filterValue = $filters[$column->key()] ?? null;
-                                    $filterActive = match ($column->filterType) {
-                                        'multiselect' => is_array($filterValue) && count(array_filter($filterValue)) > 0,
-                                        'date_range' => is_array($filterValue) && (!empty($filterValue['from']) || !empty($filterValue['to'])),
-                                        default => is_string($filterValue) && trim($filterValue) !== '',
-                                    };
+                                    $filterActive = $this->hasActiveFilter($column);
                                     $filterOptions = $column->filterType === 'multiselect' ? $column->resolveFilterOptions() : [];
                                 @endphp
                                 <div x-data="{ open: false, q: '' }" @click.outside="open = false" class="crewgrid-th-filter">
-                                    <a href="#" @click.prevent="open = !open" title="Filter" class="{{ $filterActive ? 'text-primary' : 'text-muted' }}" style="{{ $filterActive ? '' : 'opacity: .55;' }}">
+                                    <a href="#" @click.prevent="open = !open" title="Filter" class="{{ $filterActive ? 'text-indigo-600' : 'text-gray-400' }}">
                                         <i class="fa fa-filter"></i>
                                     </a>
                                     <div x-show="open" x-cloak class="crewgrid-popover">
@@ -98,19 +93,18 @@
                                             <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Filter {{ $column->label }} ..." wire:model.live.debounce.400ms="filters.{{ $column->key() }}" x-ref="input" x-effect="if (open) $nextTick(() => $refs.input.focus())">
                                         @elseif($column->filterType === 'multiselect')
                                             @if(count($filterOptions) > 8)
-                                                <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Find ..." x-model="q" style="margin-bottom: 6px;">
+                                                <input type="text" class="{{ $this->uiClass('input') }} mb-2" placeholder="Find ..." x-model="q">
                                             @endif
                                             <div class="crewgrid-options">
                                                 @foreach($filterOptions as $optionValue => $optionLabel)
-                                                    <div class="checkbox" data-label="{{ Str::lower($optionLabel) }}" x-show="q === '' || $el.dataset.label.includes(q.toLowerCase())">
-                                                        <label>
-                                                            <input type="checkbox" wire:model.live="filters.{{ $column->key() }}.{{ $optionValue }}"> {{ $optionLabel }}
-                                                        </label>
-                                                    </div>
+                                                    <label class="flex items-center gap-2 whitespace-nowrap py-0.5 font-normal text-gray-700" data-label="{{ Str::lower($optionLabel) }}" x-show="q === '' || $el.dataset.label.includes(q.toLowerCase())">
+                                                        <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" wire:model.live="filters.{{ $column->key() }}.{{ $optionValue }}">
+                                                        {{ $optionLabel }}
+                                                    </label>
                                                 @endforeach
                                             </div>
                                         @elseif($column->filterType === 'date_range')
-                                            <input type="date" class="{{ $this->uiClass('input') }}" wire:model.live="filters.{{ $column->key() }}.from" title="From" style="margin-bottom: 4px;">
+                                            <input type="date" class="{{ $this->uiClass('input') }} mb-1" wire:model.live="filters.{{ $column->key() }}.from" title="From">
                                             <input type="date" class="{{ $this->uiClass('input') }}" wire:model.live="filters.{{ $column->key() }}.to" title="To">
                                         @endif
                                         @if($filterActive)
@@ -137,7 +131,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ count($columns) }}" class="text-center text-muted" style="padding: 25px;">
+                        <td colspan="{{ count($columns) }}" class="py-6 text-center text-gray-500">
                             No records found{{ !empty($filters) || $search !== '' ? ' - try adjusting the filters.' : '.' }}
                         </td>
                     </tr>
@@ -147,22 +141,20 @@
     </div>
 
     @if($loadMode === 'infinite')
-        <div class="text-center" style="margin-bottom: 15px;">
-            <span class="text-muted small">Showing {{ $rows->count() }} of {{ number_format($rows->total()) }}</span><br>
+        <div class="mb-4 mt-2 text-center">
+            <span class="text-sm text-gray-500">Showing {{ $rows->count() }} of {{ number_format($rows->total()) }}</span><br>
             @if($rows->count() < $rows->total())
-                <button type="button" class="{{ $this->uiClass('button') }}" wire:click="loadMore" wire:loading.attr="disabled">
+                <button type="button" class="{{ $this->uiClass('button') }} mt-1" wire:click="loadMore" wire:loading.attr="disabled">
                     <i class="fa fa-angle-double-down"></i> Load More
                 </button>
             @endif
         </div>
     @else
-        <div class="row">
-            <div class="col-sm-4 text-muted small" style="padding-top: 8px;">
+        <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div class="text-sm text-gray-500">
                 Showing {{ number_format($rows->firstItem() ?? 0) }}-{{ number_format($rows->lastItem() ?? 0) }} of {{ number_format($rows->total()) }}
             </div>
-            <div class="col-sm-8 text-right">
-                {{ $rows->onEachSide(1)->links('crewgrid::themes.bootstrap3.pagination') }}
-            </div>
+            <div>{{ $rows->onEachSide(1)->links('crewgrid::themes.tailwind.pagination') }}</div>
         </div>
     @endif
 </div>

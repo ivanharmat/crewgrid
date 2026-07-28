@@ -4,6 +4,7 @@ namespace CrewGrid;
 
 use CrewGrid\Columns\Column;
 use Illuminate\Contracts\Database\Eloquent\Builder as BuilderContract;
+use InvalidArgumentException;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -18,6 +19,67 @@ use Livewire\WithPagination;
 abstract class Grid extends Component
 {
     use WithPagination;
+
+    /** Themes shipped with the package. @var array<int, string> */
+    public const THEMES = ['bootstrap3', 'bootstrap5', 'tailwind'];
+
+    /**
+     * Per-theme classes for the controls the grid renders. Read in the theme
+     * views as $this->uiClass('button'); override a few keys in
+     * config('crewgrid.classes.{theme}') or per grid via $classes, and only
+     * fork a view when the markup itself has to change.
+     *
+     * Tailwind users: these are utility classes in a PHP file, so this path
+     * has to be in tailwind.config.js content or they get purged - see the
+     * Tailwind setup section of the README.
+     *
+     * @var array<string, array<string, string>>
+     */
+    public const DEFAULT_CLASSES = [
+        'bootstrap3' => [
+            'button' => 'btn btn-default btn-sm',
+            'input' => 'form-control input-sm',
+            'select' => 'form-control input-sm',
+            'link' => '',
+            'badge' => 'badge',
+            'action' => 'btn btn-xs btn-default',
+            'action.primary' => 'btn btn-xs bg-blue',
+            'action.info' => 'btn btn-xs bg-purple',
+            'action.success' => 'btn btn-xs bg-green',
+            'action.danger' => 'btn btn-xs bg-red',
+        ],
+        'bootstrap5' => [
+            'button' => 'btn btn-outline-secondary btn-sm',
+            'input' => 'form-control form-control-sm',
+            'select' => 'form-select form-select-sm d-inline-block w-auto',
+            'link' => '',
+            'badge' => 'badge bg-secondary',
+            'action' => 'btn btn-sm btn-outline-secondary',
+            'action.primary' => 'btn btn-sm btn-primary',
+            'action.info' => 'btn btn-sm btn-info',
+            'action.success' => 'btn btn-sm btn-success',
+            'action.danger' => 'btn btn-sm btn-danger',
+        ],
+        'tailwind' => [
+            'button' => 'inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2.5 py-1 text-sm text-gray-700 shadow-sm hover:bg-gray-50',
+            'input' => 'block w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500',
+            'select' => 'rounded-md border border-gray-300 py-1 pl-2 pr-7 text-sm shadow-sm',
+            'link' => 'text-sm text-indigo-600 hover:underline',
+            'badge' => 'ml-1 rounded-full bg-gray-600 px-1.5 text-xs text-white',
+            'action' => 'inline-flex items-center rounded border border-gray-300 bg-white px-2 py-0.5 text-xs text-gray-700 hover:bg-gray-50',
+            'action.primary' => 'inline-flex items-center rounded bg-indigo-600 px-2 py-0.5 text-xs text-white hover:bg-indigo-700',
+            'action.info' => 'inline-flex items-center rounded bg-purple-600 px-2 py-0.5 text-xs text-white hover:bg-purple-700',
+            'action.success' => 'inline-flex items-center rounded bg-green-600 px-2 py-0.5 text-xs text-white hover:bg-green-700',
+            'action.danger' => 'inline-flex items-center rounded bg-red-600 px-2 py-0.5 text-xs text-white hover:bg-red-700',
+        ],
+    ];
+
+    /**
+     * Class overrides for this grid, e.g. ['button' => 'btn btn-primary btn-sm'].
+     *
+     * @var array<string, string>
+     */
+    public array $classes = [];
 
     #[Url(as: 'sort', except: '')]
     public string $sortField = '';
@@ -344,6 +406,54 @@ abstract class Grid extends Component
         return 'crewgrid.'.$this->getName();
     }
 
+    public function resolvedTheme(): string
+    {
+        return $this->theme ?? (string) config('crewgrid.theme', 'bootstrap3');
+    }
+
+    /**
+     * Classes for one of the grid's controls: button, input, select, link,
+     * badge or action. Theme defaults, then config overrides, then this grid's
+     * own - each layer only has to name the keys it wants to change.
+     *
+     * Any control takes dotted variants: uiClass('action.danger') uses that
+     * key if it exists and otherwise falls back to plain 'action', so a name
+     * the theme has never heard of still renders as a button rather than as
+     * unstyled text. Invent your own ('action.warning') in config or $classes.
+     */
+    public function uiClass(string $control): string
+    {
+        $theme = $this->resolvedTheme();
+
+        $classes = array_merge(
+            self::DEFAULT_CLASSES[$theme] ?? [],
+            (array) config('crewgrid.classes.'.$theme, []),
+            $this->classes
+        );
+
+        if (isset($classes[$control])) {
+            return (string) $classes[$control];
+        }
+
+        $base = strstr($control, '.', true);
+
+        return (string) ($base === false ? '' : ($classes[$base] ?? ''));
+    }
+
+    /**
+     * A themed link for an action cell, escaped and ready to return from a
+     * Column::format() callback on an ->html() column. $variant picks an
+     * "action.{variant}" class, falling back to the plain action button.
+     *
+     * Column::make('', 'id')->html()->format(fn ($value, $row) =>
+     *     $this->actionLink('Estimate', url('estimates/'.$row->estimate_id), 'info'))
+     */
+    public function actionLink(string $label, string $url, string $variant = '', bool $new_tab = true): string
+    {
+        return '<a href="'.e($url).'" class="'.e($this->uiClass($variant === '' ? 'action' : 'action.'.$variant)).'"'.
+            ($new_tab ? ' target="_blank" rel="noopener"' : '').'>'.e($label).'</a>';
+    }
+
     /**
      * Whether to draw column borders and row lines. Read from the theme as
      * $this->isBordered(), not as view data: Livewire injects public
@@ -375,7 +485,16 @@ abstract class Grid extends Component
             $rows = $this->buildQuery()->paginate($per_page);
         }
 
-        $theme = $this->theme ?? config('crewgrid.theme', 'bootstrap3');
+        $theme = $this->resolvedTheme();
+
+        // A typo would otherwise surface as "View [crewgrid::themes...] not
+        // found", which reads like a broken package rather than a setting.
+        if (! view()->exists('crewgrid::themes.'.$theme.'.grid')) {
+            throw new InvalidArgumentException(
+                'Unknown CrewGrid theme ['.$theme.']. Available: '.implode(', ', self::THEMES).
+                '. Set it in config/crewgrid.php or with $theme on the grid.'
+            );
+        }
 
         return view('crewgrid::themes.'.$theme.'.grid', [
             'columns' => $this->visibleColumns(),

@@ -1,3 +1,5 @@
+{{-- Shared by every theme: rendering a value is not a styling concern. The
+     <td> and its classes live in each theme's grid view. --}}
 @php
     $value = data_get($row, $column->field);
     if (! is_null($column->formatCallback)) {
