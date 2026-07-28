@@ -498,9 +498,9 @@ abstract class Grid extends Component
      *
      * $icon is markup, not a class name, so any icon set works:
      *
-     *     $this->actionLink('Estimate', $url, 'info', icon: '<i class="fa fa-file-o"></i>')
+     *     $this->actionLink('Estimate', $url, 'info', '<i class="fa fa-file-o"></i>')
      */
-    public function actionLink(string $label, string $url, string $variant = '', bool $new_tab = true, string $icon = ''): string
+    public function actionLink(string $label, string $url, string $variant = '', string $icon = '', bool $new_tab = true): string
     {
         return '<a href="'.e($url).'" class="'.e($this->uiClass($variant === '' ? 'action' : 'action.'.$variant)).'"'.
             ($new_tab ? ' target="_blank" rel="noopener"' : '').'>'.

@@ -233,7 +233,7 @@ Keys: `filter`, `columns`, `clear`, `show_all`, `resize`, `load_more`, `loading`
 ```php
 Column::make('Date', 'timestamp')->icon('<i class="fa fa-calendar"></i>');
 
-$this->actionLink('Estimate', $url, 'info', icon: '<i class="fa fa-file-o"></i>');
+$this->actionLink('Estimate', $url, 'info', '<i class="fa fa-file-o"></i>');
 ```
 
 Both take markup and render it unescaped — it is yours, not user data. The action link's *label* is still escaped.
