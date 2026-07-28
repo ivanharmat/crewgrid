@@ -24,4 +24,19 @@ return [
 
     'per_page_options' => [15, 30, 50, 100],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Appearance
+    |--------------------------------------------------------------------------
+    |
+    | "bordered" draws column borders and row lines; any grid can override it
+    | via its $bordered property. "min_column_width" is the floor a column can
+    | be dragged down to, in pixels.
+    |
+    */
+
+    'bordered' => true,
+
+    'min_column_width' => 60,
+
 ];

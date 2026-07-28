@@ -41,6 +41,9 @@ abstract class Grid extends Component
     /** "pager" or "infinite" - how additional rows load. */
     public string $loadMode = 'pager';
 
+    /** Column borders and row lines. Null falls back to config. */
+    public ?bool $bordered = null;
+
     /** Rows currently shown in infinite mode. */
     public int $infiniteLoaded = 0;
 
@@ -165,6 +168,28 @@ abstract class Grid extends Component
         return $query;
     }
 
+    /**
+     * Whether to draw column borders and row lines. Read from the theme as
+     * $this->isBordered(), not as view data: Livewire injects public
+     * properties into the view after the explicit data, so a "bordered" key
+     * would be overwritten by the null default of the property below it.
+     */
+    public function isBordered(): bool
+    {
+        return $this->bordered ?? (bool) config('crewgrid.bordered', true);
+    }
+
+    /**
+     * localStorage key the dragged column widths are kept under. Dragging a
+     * column is a personal viewing preference, so it stays out of the URL that
+     * sort/filter state is shared through - override to scope it differently
+     * (per user, per tab) or to share one set of widths across grids.
+     */
+    protected function widthStorageKey(): string
+    {
+        return 'crewgrid:widths:'.$this->getName();
+    }
+
     protected function applyDateRange(BuilderContract $query, string $field, array $value): void
     {
         if (! empty($value['from'])) {
@@ -191,6 +216,8 @@ abstract class Grid extends Component
             'columns' => $this->columns(),
             'rows' => $rows,
             'perPageOptions' => (array) config('crewgrid.per_page_options', [15, 30, 50, 100]),
+            'minColumnWidth' => (int) config('crewgrid.min_column_width', 60),
+            'widthStorageKey' => $this->widthStorageKey(),
         ]);
     }
 }

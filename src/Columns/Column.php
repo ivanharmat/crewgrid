@@ -39,6 +39,16 @@ class Column
 
     public ?string $view = null;
 
+    /** CSS width for the column ("180px", "12%"), or null to size to content. */
+    public ?string $width = null;
+
+    /** @var 'left'|'center'|'right' */
+    public string $align = 'left';
+
+    public bool $nowrap = false;
+
+    public bool $resizable = true;
+
     final private function __construct(string $label, string $field)
     {
         $this->label = $label;
@@ -126,6 +136,61 @@ class Column
         $this->view = $view;
 
         return $this;
+    }
+
+    /**
+     * Starting width for the column - an int is treated as pixels. Users can
+     * still drag it from here unless the column is notResizable().
+     */
+    public function width(string|int $width): static
+    {
+        $this->width = is_int($width) ? $width.'px' : $width;
+
+        return $this;
+    }
+
+    /**
+     * @param  'left'|'center'|'right'  $align
+     */
+    public function align(string $align): static
+    {
+        $this->align = $align;
+
+        return $this;
+    }
+
+    /**
+     * Keep the cell on one line and ellipsize the overflow. Cells wrap by
+     * default so a narrowed column hides nothing.
+     */
+    public function nowrap(): static
+    {
+        $this->nowrap = true;
+
+        return $this;
+    }
+
+    public function notResizable(): static
+    {
+        $this->resizable = false;
+
+        return $this;
+    }
+
+    /**
+     * Cell/header classes for alignment and wrapping.
+     */
+    public function cssClass(): string
+    {
+        $classes = [];
+        if ($this->align !== 'left') {
+            $classes[] = 'crewgrid-align-'.$this->align;
+        }
+        if ($this->nowrap) {
+            $classes[] = 'crewgrid-nowrap';
+        }
+
+        return implode(' ', $classes);
     }
 
     /**

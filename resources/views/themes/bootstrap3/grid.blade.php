@@ -1,5 +1,5 @@
-<div>
-    <style>[x-cloak] { display: none !important; }</style>
+<div x-data="crewGridResize('{{ $widthStorageKey }}', {{ $minColumnWidth }})" @pointermove.window="move($event)" @pointerup.window="stop()">
+    @include('crewgrid::themes.bootstrap3.assets')
     <div class="row" style="margin-bottom: 8px;">
         <div class="col-sm-4">
             @if(collect($columns)->contains(fn ($c) => $c->searchable))
@@ -8,6 +8,7 @@
         </div>
         <div class="col-sm-8 text-right">
             <span wire:loading.delay class="text-muted small" style="margin-right: 8px;">Loading <i class="fa fa-spinner fa-spin"></i></span>
+            <button type="button" class="btn btn-default btn-sm" x-show="customised" x-cloak @click="resetWidths()" title="Reset column widths"><i class="fa fa-arrows-h"></i> Reset Widths</button>
             @if(!empty($filters) || $search !== '')
                 <button type="button" class="btn btn-default btn-sm" wire:click="clearFilters"><i class="fa fa-times"></i> Clear Filters</button>
             @endif
@@ -19,24 +20,35 @@
         </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover table-condensed">
+    <div class="table-responsive" @pointerdown="start($event)">
+        <table class="table table-striped table-hover table-condensed crewgrid-table {{ $this->isBordered() ? 'crewgrid-bordered' : '' }}">
+            {{-- Ignored by the morph so dragged widths survive a sort/filter/page.
+                 Safe because columns() is fixed for the life of a grid class. --}}
+            <colgroup wire:ignore>
+                @foreach($columns as $column)
+                    <col data-crewgrid-col="{{ $column->key() }}" data-crewgrid-width="{{ $column->width }}" @if(!is_null($column->width)) style="width: {{ $column->width }};" @endif>
+                @endforeach
+            </colgroup>
             <thead>
                 <tr>
                     @foreach($columns as $column)
-                        <th wire:key="crewgrid-head-{{ $column->key() }}" style="white-space: nowrap;">
-                            @if($column->sortable)
-                                <a href="#" wire:click.prevent="sortBy('{{ $column->key() }}')">
+                        <th wire:key="crewgrid-head-{{ $column->key() }}" class="{{ $column->cssClass() }}">
+                            {{-- Only the label truncates. The filter sits outside this
+                                 wrapper so its popover is never clipped by the ellipsis. --}}
+                            <span class="crewgrid-th-label">
+                                @if($column->sortable)
+                                    <a href="#" wire:click.prevent="sortBy('{{ $column->key() }}')">
+                                        {{ $column->label }}
+                                        @if($sortField === $column->key())
+                                            <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'asc' : 'desc' }}"></i>
+                                        @else
+                                            <i class="fa fa-sort text-muted"></i>
+                                        @endif
+                                    </a>
+                                @else
                                     {{ $column->label }}
-                                    @if($sortField === $column->key())
-                                        <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'asc' : 'desc' }}"></i>
-                                    @else
-                                        <i class="fa fa-sort text-muted"></i>
-                                    @endif
-                                </a>
-                            @else
-                                {{ $column->label }}
-                            @endif
+                                @endif
+                            </span>
                             @if(!is_null($column->filterType))
                                 @php
                                     $filterValue = $filters[$column->key()] ?? null;
@@ -47,7 +59,7 @@
                                     };
                                     $filterOptions = $column->filterType === 'multiselect' ? $column->resolveFilterOptions() : [];
                                 @endphp
-                                <div x-data="{ open: false, q: '' }" @click.outside="open = false" style="position: relative; display: inline-block; margin-left: 4px;">
+                                <div x-data="{ open: false, q: '' }" @click.outside="open = false" class="crewgrid-th-filter">
                                     <a href="#" @click.prevent="open = !open" title="Filter" class="{{ $filterActive ? 'text-primary' : 'text-muted' }}" style="{{ $filterActive ? '' : 'opacity: .55;' }}">
                                         <i class="fa fa-filter"></i>
                                     </a>
@@ -79,6 +91,9 @@
                                     </div>
                                 </div>
                             @endif
+                            @if($column->resizable && !$loop->last)
+                                <span class="crewgrid-resizer" data-crewgrid-col="{{ $column->key() }}" title="Drag to resize"></span>
+                            @endif
                         </th>
                     @endforeach
                 </tr>
@@ -87,7 +102,7 @@
                 @forelse($rows as $row)
                     <tr wire:key="crewgrid-row-{{ $row->getKey() }}">
                         @foreach($columns as $column)
-                            <td>@include('crewgrid::themes.bootstrap3.cell')</td>
+                            <td class="{{ $column->cssClass() }}">@include('crewgrid::themes.bootstrap3.cell')</td>
                         @endforeach
                     </tr>
                 @empty

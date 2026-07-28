@@ -103,8 +103,22 @@ That's it — sorting, filtering, quick search, pagination and URL state all wor
 | `->format(Closure $callback)` | Transform the cell value: `fn ($value, $row)`. |
 | `->html()` | Render the formatted value as raw HTML (you escape user data). |
 | `->view('some.blade')` | Render the cell with your Blade view (receives `$row` and `$value`). |
+| `->width('180px')` | Starting width — an `int` is taken as pixels, strings pass through so `'20%'` works. Users can still drag from here. |
+| `->align('right')` | `left` (default), `center` or `right`. |
+| `->nowrap()` | Keep the cell on one line and ellipsize. Cells wrap by default, so narrowing a column never hides content. |
+| `->notResizable()` | Fix this column's width — no drag handle. |
 
 All default filter behaviors have callback escape hatches, so computed columns, joins and cross-database filters are all expressible.
+
+## Appearance and column widths
+
+Column borders and row lines are on by default; turn them off app-wide with `'bordered' => false` in the config, or per grid with `public ?bool $bordered = false;`.
+
+Every column is resizable unless you call `->notResizable()`. Drag the divider in the header; the grid remembers the widths per browser in `localStorage` and a **Reset Widths** button appears once anything has been dragged. Widths deliberately stay out of the query string — sorting and filtering describe *what* you are looking at and are worth sharing, while column widths are a personal viewing preference and would only make shared links noisy. Override `widthStorageKey()` on a grid to scope them differently (per user, or shared across several grids).
+
+Columns without an explicit `->width()` keep whatever the browser lays out naturally: the grid measures once on load, freezes those widths, and only then switches to a fixed layout so dragging behaves predictably. `config('crewgrid.min_column_width')` (default `60`) is the floor a column can be dragged to.
+
+No build step and nothing to add to your layout — the small stylesheet and resize script are emitted inline once per page.
 
 ## Loading modes
 
