@@ -110,13 +110,22 @@ That's it — sorting, filtering, quick search, pagination and URL state all wor
 
 All default filter behaviors have callback escape hatches, so computed columns, joins and cross-database filters are all expressible.
 
-## Appearance and column widths
+## Appearance, column widths and show/hide
 
 Column borders and row lines are on by default; turn them off app-wide with `'bordered' => false` in the config, or per grid with `public ?bool $bordered = false;`.
 
-Every column is resizable unless you call `->notResizable()`. Drag the divider in the header; the grid remembers the widths per browser in `localStorage` and a **Reset Widths** button appears once anything has been dragged. Widths deliberately stay out of the query string — sorting and filtering describe *what* you are looking at and are worth sharing, while column widths are a personal viewing preference and would only make shared links noisy. Override `widthStorageKey()` on a grid to scope them differently (per user, or shared across several grids).
+**Resizing.** Every column is resizable unless you call `->notResizable()`. Drag the divider in the header; a **Reset Widths** button appears once anything has been dragged. Columns without an explicit `->width()` keep whatever the browser lays out naturally — the grid freezes those widths at the moment a drag starts and only then switches to a fixed layout, so nothing snaps to equal widths. `config('crewgrid.min_column_width')` (default `60`) is the floor.
 
-Columns without an explicit `->width()` keep whatever the browser lays out naturally: the grid measures once on load, freezes those widths, and only then switches to a fixed layout so dragging behaves predictably. `config('crewgrid.min_column_width')` (default `60`) is the floor a column can be dragged to.
+**Show/hide.** The **Columns** button in the toolbar lists every column with a checkbox, badges how many are hidden, and offers *Show All*. The last visible column can't be hidden. Filters and quick search always run over the full column set — hiding a column changes the view, not the result set — so a filter left on a hidden column keeps applying and is flagged with a funnel in the picker rather than silently shrinking the results.
+
+**Where preferences live.** Both are server-side, kept in the session under `preferenceKey()`, so they survive a reload with no flash of unstyled columns and the `<colgroup>` can be rendered correctly on the server. They deliberately stay out of the query string: sorting and filtering describe *what* you are looking at and are worth sharing, while widths and hidden columns are personal viewing preferences that would only make shared links noisy. Override `loadPreferences()` / `savePreferences()` to store them per user instead and they will outlive the session:
+
+```php
+protected function loadPreferences(): array
+{
+    return auth()->user()->grid_preferences[$this->preferenceKey()] ?? [];
+}
+```
 
 No build step and nothing to add to your layout — the small stylesheet and resize script are emitted inline once per page.
 

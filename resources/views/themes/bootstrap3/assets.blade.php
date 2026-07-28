@@ -38,6 +38,38 @@
         margin-left: 4px;
     }
 
+    .crewgrid-popover {
+        position: absolute;
+        top: 100%;
+        left: -8px;
+        z-index: 1000;
+        min-width: 230px;
+        margin-top: 4px;
+        padding: 10px;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .18);
+        font-weight: normal;
+        text-align: left;
+        white-space: normal;
+    }
+    /* Toolbar popovers sit at the right edge - opening leftwards keeps them
+       on screen instead of pushing the page sideways. */
+    .crewgrid-popover-right { left: auto; right: 0; }
+
+    .crewgrid-popover .checkbox { margin: 3px 0; }
+    /* Bootstrap absolutely positions the box at margin-left:-20px and relies
+       on the label's own left padding to make room for it - set the padding
+       here rather than inline, or the box lands outside the popover. */
+    .crewgrid-popover .checkbox label {
+        display: block;
+        padding: 1px 4px 1px 24px;
+        font-weight: normal;
+        white-space: nowrap;
+    }
+    .crewgrid-popover .crewgrid-options { max-height: 240px; overflow-y: auto; }
+
     /* Cells wrap by default: narrowing a column must never hide content. */
     .crewgrid-table > tbody > tr > td { word-break: break-word; }
     .crewgrid-table > tbody > tr > td.crewgrid-nowrap {
@@ -81,18 +113,15 @@
 </style>
 
 <script>
-    window.crewGridResize = function (storageKey, minWidth) {
+    /* Widths are server state: the drag is applied straight to the DOM so it
+       tracks the pointer, then the whole map is sent once on release. The
+       server re-renders the colgroup from it, so a width survives sorting,
+       filtering, paging and columns being hidden. */
+    window.crewGridResize = function (minWidth) {
         return {
             dragKey: null,
             startX: 0,
             startWidth: 0,
-            customised: false,
-
-            init() {
-                // After paint, so the browser has laid the columns out and
-                // there is something real to freeze.
-                this.$nextTick(() => requestAnimationFrame(() => this.applyWidths()));
-            },
 
             table() {
                 return this.$el.querySelector('table.crewgrid-table');
@@ -106,32 +135,20 @@
                 return this.$el.querySelector('col[data-crewgrid-col="' + key + '"]');
             },
 
-            stored() {
-                try {
-                    return JSON.parse(window.localStorage.getItem(storageKey) || '{}');
-                } catch (error) {
-                    return {};
-                }
-            },
-
-            applyWidths() {
+            /* Columns the author never sized are auto-laid-out. Freeze what
+               the browser worked out before switching to a fixed layout, or
+               they would all snap to equal widths the moment a drag starts. */
+            freezeWidths() {
                 var table = this.table();
                 if (!table) {
                     return;
                 }
-                var stored = this.stored();
                 var headers = Array.from(table.querySelectorAll('thead th'));
                 this.cols().forEach(function (col, index) {
-                    // What the user dragged wins; then a width the column
-                    // declared; otherwise freeze the natural layout.
-                    var width = parseInt(stored[col.dataset.crewgridCol], 10)
-                        || parseInt(col.style.width, 10)
-                        || (headers[index] ? headers[index].offsetWidth : 0);
-                    if (width > 0) {
-                        col.style.width = width + 'px';
+                    if (!parseInt(col.style.width, 10) && headers[index]) {
+                        col.style.width = headers[index].offsetWidth + 'px';
                     }
                 });
-                this.customised = Object.keys(stored).length > 0;
                 table.classList.add('crewgrid-fixed');
             },
 
@@ -140,12 +157,12 @@
                 if (!handle) {
                     return;
                 }
-                var col = this.colFor(handle.dataset.crewgridCol);
                 var header = handle.closest('th');
-                if (!col || !header) {
+                if (!header || !this.colFor(handle.dataset.crewgridCol)) {
                     return;
                 }
                 event.preventDefault();
+                this.freezeWidths();
                 this.dragKey = handle.dataset.crewgridCol;
                 this.startX = event.clientX;
                 this.startWidth = header.offsetWidth;
@@ -168,10 +185,7 @@
                 }
                 this.dragKey = null;
                 document.body.classList.remove('crewgrid-resizing');
-                this.save();
-            },
 
-            save() {
                 var widths = {};
                 this.cols().forEach(function (col) {
                     var width = parseInt(col.style.width, 10);
@@ -179,30 +193,7 @@
                         widths[col.dataset.crewgridCol] = width;
                     }
                 });
-                try {
-                    window.localStorage.setItem(storageKey, JSON.stringify(widths));
-                    this.customised = true;
-                } catch (error) {
-                    // Private mode / quota - the drag still applied, it just
-                    // will not survive a reload.
-                }
-            },
-
-            resetWidths() {
-                try {
-                    window.localStorage.removeItem(storageKey);
-                } catch (error) {
-                    // Nothing stored to clear.
-                }
-                this.customised = false;
-                this.cols().forEach(function (col) {
-                    col.style.width = col.dataset.crewgridWidth || '';
-                });
-                var table = this.table();
-                if (table) {
-                    table.classList.remove('crewgrid-fixed');
-                }
-                this.$nextTick(() => requestAnimationFrame(() => this.applyWidths()));
+                this.$wire.call('setColumnWidths', widths);
             },
         };
     };

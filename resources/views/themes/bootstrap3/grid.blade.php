@@ -1,4 +1,4 @@
-<div x-data="crewGridResize('{{ $widthStorageKey }}', {{ $minColumnWidth }})" @pointermove.window="move($event)" @pointerup.window="stop()">
+<div x-data="crewGridResize({{ $minColumnWidth }})" @pointermove.window="move($event)" @pointerup.window="stop()">
     @include('crewgrid::themes.bootstrap3.assets')
     <div class="row" style="margin-bottom: 8px;">
         <div class="col-sm-4">
@@ -8,7 +8,36 @@
         </div>
         <div class="col-sm-8 text-right">
             <span wire:loading.delay class="text-muted small" style="margin-right: 8px;">Loading <i class="fa fa-spinner fa-spin"></i></span>
-            <button type="button" class="btn btn-default btn-sm" x-show="customised" x-cloak @click="resetWidths()" title="Reset column widths"><i class="fa fa-arrows-h"></i> Reset Widths</button>
+            @if($this->hasDraggedWidths())
+                <button type="button" class="btn btn-default btn-sm" wire:click="resetColumnWidths" title="Reset column widths"><i class="fa fa-arrows-h"></i> Reset Widths</button>
+            @endif
+            <div x-data="{ open: false }" @click.outside="open = false" class="crewgrid-th-filter">
+                <button type="button" class="btn btn-default btn-sm" @click="open = !open" title="Show or hide columns">
+                    <i class="fa fa-columns"></i> Columns
+                    @php $hiddenCount = count($pickerColumns) - count($columns); @endphp
+                    @if($hiddenCount > 0)<span class="badge">{{ $hiddenCount }}</span>@endif
+                </button>
+                <div x-show="open" x-cloak class="crewgrid-popover crewgrid-popover-right">
+                    @foreach($pickerColumns as $pickerColumn)
+                        <div class="checkbox" wire:key="crewgrid-pick-{{ $pickerColumn->key() }}">
+                            <label>
+                                <input type="checkbox" wire:click="toggleColumn('{{ $pickerColumn->key() }}')" @checked(!$this->isColumnHidden($pickerColumn->key()))>
+                                {{ $pickerColumn->label }}
+                                {{-- A filter on a hidden column still applies - say so, or it
+                                     looks like the grid is dropping rows for no reason. --}}
+                                @if($this->hasActiveFilter($pickerColumn))
+                                    <i class="fa fa-filter text-primary" title="Filtered"></i>
+                                @endif
+                            </label>
+                        </div>
+                    @endforeach
+                    @if($hiddenCount > 0)
+                        <div style="border-top: 1px solid #eee; margin-top: 8px; padding-top: 6px;">
+                            <a href="#" wire:click.prevent="showAllColumns"><i class="fa fa-eye"></i> Show All</a>
+                        </div>
+                    @endif
+                </div>
+            </div>
             @if(!empty($filters) || $search !== '')
                 <button type="button" class="btn btn-default btn-sm" wire:click="clearFilters"><i class="fa fa-times"></i> Clear Filters</button>
             @endif
@@ -21,12 +50,13 @@
     </div>
 
     <div class="table-responsive" @pointerdown="start($event)">
-        <table class="table table-striped table-hover table-condensed crewgrid-table {{ $this->isBordered() ? 'crewgrid-bordered' : '' }}">
-            {{-- Ignored by the morph so dragged widths survive a sort/filter/page.
-                 Safe because columns() is fixed for the life of a grid class. --}}
-            <colgroup wire:ignore>
+        <table class="table table-striped table-hover table-condensed crewgrid-table {{ $this->isBordered() ? 'crewgrid-bordered' : '' }} {{ $this->hasFixedLayout() ? 'crewgrid-fixed' : '' }}">
+            {{-- Server-rendered, so widths survive a morph and the column set can
+                 change when columns are hidden. --}}
+            <colgroup>
                 @foreach($columns as $column)
-                    <col data-crewgrid-col="{{ $column->key() }}" data-crewgrid-width="{{ $column->width }}" @if(!is_null($column->width)) style="width: {{ $column->width }};" @endif>
+                    @php $renderedWidth = $this->columnWidth($column); @endphp
+                    <col data-crewgrid-col="{{ $column->key() }}" @if(!is_null($renderedWidth)) style="width: {{ $renderedWidth }};" @endif>
                 @endforeach
             </colgroup>
             <thead>
@@ -63,17 +93,17 @@
                                     <a href="#" @click.prevent="open = !open" title="Filter" class="{{ $filterActive ? 'text-primary' : 'text-muted' }}" style="{{ $filterActive ? '' : 'opacity: .55;' }}">
                                         <i class="fa fa-filter"></i>
                                     </a>
-                                    <div x-show="open" x-cloak style="position: absolute; top: 100%; left: -8px; z-index: 1000; background: #fff; border: 1px solid #ccc; border-radius: 3px; box-shadow: 0 4px 12px rgba(0,0,0,.18); padding: 10px; min-width: 230px; margin-top: 4px; font-weight: normal; text-align: left; white-space: normal;">
+                                    <div x-show="open" x-cloak class="crewgrid-popover">
                                         @if($column->filterType === 'text')
                                             <input type="text" class="form-control input-sm" placeholder="Filter {{ $column->label }} ..." wire:model.live.debounce.400ms="filters.{{ $column->key() }}" x-ref="input" x-effect="if (open) $nextTick(() => $refs.input.focus())">
                                         @elseif($column->filterType === 'multiselect')
                                             @if(count($filterOptions) > 8)
                                                 <input type="text" class="form-control input-sm" placeholder="Find ..." x-model="q" style="margin-bottom: 6px;">
                                             @endif
-                                            <div style="max-height: 240px; overflow-y: auto;">
+                                            <div class="crewgrid-options">
                                                 @foreach($filterOptions as $optionValue => $optionLabel)
-                                                    <div class="checkbox" style="margin: 3px 0;" data-label="{{ Str::lower($optionLabel) }}" x-show="q === '' || $el.dataset.label.includes(q.toLowerCase())">
-                                                        <label style="font-weight: normal; white-space: nowrap; display: block; padding: 1px 4px;">
+                                                    <div class="checkbox" data-label="{{ Str::lower($optionLabel) }}" x-show="q === '' || $el.dataset.label.includes(q.toLowerCase())">
+                                                        <label>
                                                             <input type="checkbox" wire:model.live="filters.{{ $column->key() }}.{{ $optionValue }}"> {{ $optionLabel }}
                                                         </label>
                                                     </div>

@@ -47,6 +47,15 @@ abstract class Grid extends Component
     /** Rows currently shown in infinite mode. */
     public int $infiniteLoaded = 0;
 
+    /**
+     * Resolved viewing preferences, memoised per request. Not a public
+     * property: this is server state, and Livewire would round-trip it
+     * through the client on every request for nothing.
+     *
+     * @var array{widths: array<string, int>, hidden: array<int, string>}|null
+     */
+    private ?array $gridPreferences = null;
+
     abstract protected function query(): BuilderContract;
 
     /** @return array<int, Column> */
@@ -169,6 +178,173 @@ abstract class Grid extends Component
     }
 
     /**
+     * Columns actually rendered. Filters and quick search still run over the
+     * full set - hiding a column changes the view, not the result set - so a
+     * filter left on a hidden column keeps applying, and the column picker
+     * marks it so it can still be found.
+     *
+     * @return array<int, Column>
+     */
+    public function visibleColumns(): array
+    {
+        $hidden = $this->preferences()['hidden'];
+        $visible = array_values(array_filter(
+            $this->columns(),
+            fn (Column $column) => ! in_array($column->key(), $hidden, true)
+        ));
+
+        // A grid with no columns is a broken page, not a preference.
+        return $visible === [] ? array_slice(array_values($this->columns()), 0, 1) : $visible;
+    }
+
+    public function isColumnHidden(string $key): bool
+    {
+        return in_array($key, $this->preferences()['hidden'], true);
+    }
+
+    /**
+     * Rendered width for a column: what the user dragged, else what the
+     * column declared, else nothing (the browser sizes it).
+     */
+    public function columnWidth(Column $column): ?string
+    {
+        $width = $this->preferences()['widths'][$column->key()] ?? null;
+
+        return is_null($width) ? $column->width : $width.'px';
+    }
+
+    public function hasDraggedWidths(): bool
+    {
+        return $this->preferences()['widths'] !== [];
+    }
+
+    /**
+     * Widths only bite under a fixed table layout, and a fixed layout with no
+     * widths would make every column equal - so it is switched on only once
+     * something has a width to honour.
+     */
+    public function hasFixedLayout(): bool
+    {
+        return $this->hasDraggedWidths()
+            || collect($this->visibleColumns())->contains(fn (Column $column) => ! is_null($column->width));
+    }
+
+    /**
+     * Whether a filter is currently set on this column - shown in the picker
+     * so a filter on a hidden column is still findable.
+     */
+    public function hasActiveFilter(Column $column): bool
+    {
+        $value = $this->filters[$column->key()] ?? null;
+
+        return match ($column->filterType) {
+            'multiselect' => is_array($value) && count(array_filter($value)) > 0,
+            'date_range' => is_array($value) && (! empty($value['from']) || ! empty($value['to'])),
+            'text' => is_string($value) && trim($value) !== '',
+            default => false,
+        };
+    }
+
+    public function toggleColumn(string $key): void
+    {
+        $keys = array_map(fn (Column $column) => $column->key(), $this->columns());
+        if (! in_array($key, $keys, true)) {
+            return;
+        }
+
+        $hidden = $this->preferences()['hidden'];
+        if (in_array($key, $hidden, true)) {
+            $hidden = array_values(array_diff($hidden, [$key]));
+        } elseif (count($hidden) + 1 < count($keys)) { // never hide the last one
+            $hidden[] = $key;
+        }
+
+        $this->writePreferences(['hidden' => $hidden]);
+    }
+
+    public function showAllColumns(): void
+    {
+        $this->writePreferences(['hidden' => []]);
+    }
+
+    /**
+     * Persist the whole width map at the end of a drag. The browser sends
+     * every column, not just the dragged one, because the drag freezes the
+     * previously auto-sized columns at the same moment.
+     *
+     * @param  array<string, int|string>  $widths
+     */
+    public function setColumnWidths(array $widths): void
+    {
+        $minimum = (int) config('crewgrid.min_column_width', 60);
+        $keys = array_map(fn (Column $column) => $column->key(), $this->columns());
+
+        $clean = [];
+        foreach ($widths as $key => $width) {
+            if (in_array($key, $keys, true) && is_numeric($width)) {
+                $clean[$key] = max($minimum, (int) $width);
+            }
+        }
+
+        $this->writePreferences(['widths' => $clean]);
+    }
+
+    public function resetColumnWidths(): void
+    {
+        $this->writePreferences(['widths' => []]);
+    }
+
+    /**
+     * @return array{widths: array<string, int>, hidden: array<int, string>}
+     */
+    protected function preferences(): array
+    {
+        if (is_null($this->gridPreferences)) {
+            $stored = $this->loadPreferences();
+            $this->gridPreferences = [
+                'widths' => is_array($stored['widths'] ?? null) ? $stored['widths'] : [],
+                'hidden' => is_array($stored['hidden'] ?? null) ? array_values($stored['hidden']) : [],
+            ];
+        }
+
+        return $this->gridPreferences;
+    }
+
+    /**
+     * @param  array{widths?: array<string, int>, hidden?: array<int, string>}  $changes
+     */
+    protected function writePreferences(array $changes): void
+    {
+        $this->gridPreferences = array_merge($this->preferences(), $changes);
+        $this->savePreferences($this->gridPreferences);
+    }
+
+    /**
+     * Where viewing preferences live. Session by default so nothing extra is
+     * required of the host app; override both halves to persist per user (a
+     * preferences table, a JSON column) and they will outlive the session.
+     *
+     * @return array<string, mixed>
+     */
+    protected function loadPreferences(): array
+    {
+        return (array) session()->get($this->preferenceKey(), []);
+    }
+
+    /**
+     * @param  array<string, mixed>  $preferences
+     */
+    protected function savePreferences(array $preferences): void
+    {
+        session()->put($this->preferenceKey(), $preferences);
+    }
+
+    protected function preferenceKey(): string
+    {
+        return 'crewgrid.'.$this->getName();
+    }
+
+    /**
      * Whether to draw column borders and row lines. Read from the theme as
      * $this->isBordered(), not as view data: Livewire injects public
      * properties into the view after the explicit data, so a "bordered" key
@@ -177,17 +353,6 @@ abstract class Grid extends Component
     public function isBordered(): bool
     {
         return $this->bordered ?? (bool) config('crewgrid.bordered', true);
-    }
-
-    /**
-     * localStorage key the dragged column widths are kept under. Dragging a
-     * column is a personal viewing preference, so it stays out of the URL that
-     * sort/filter state is shared through - override to scope it differently
-     * (per user, per tab) or to share one set of widths across grids.
-     */
-    protected function widthStorageKey(): string
-    {
-        return 'crewgrid:widths:'.$this->getName();
     }
 
     protected function applyDateRange(BuilderContract $query, string $field, array $value): void
@@ -213,11 +378,11 @@ abstract class Grid extends Component
         $theme = $this->theme ?? config('crewgrid.theme', 'bootstrap3');
 
         return view('crewgrid::themes.'.$theme.'.grid', [
-            'columns' => $this->columns(),
+            'columns' => $this->visibleColumns(),
+            'pickerColumns' => $this->columns(),
             'rows' => $rows,
             'perPageOptions' => (array) config('crewgrid.per_page_options', [15, 30, 50, 100]),
             'minColumnWidth' => (int) config('crewgrid.min_column_width', 60),
-            'widthStorageKey' => $this->widthStorageKey(),
         ]);
     }
 }
