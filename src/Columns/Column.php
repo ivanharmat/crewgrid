@@ -49,6 +49,9 @@ class Column
 
     public bool $resizable = true;
 
+    /** Markup rendered before the header label - author markup, not escaped. */
+    public ?string $icon = null;
+
     final private function __construct(string $label, string $field)
     {
         $this->label = $label;
@@ -173,6 +176,19 @@ class Column
     public function notResizable(): static
     {
         $this->resizable = false;
+
+        return $this;
+    }
+
+    /**
+     * An icon before the header label. Takes markup rather than a class name
+     * so any icon set works, including inline SVG:
+     *
+     *     ->icon('<i class="fa fa-calendar"></i>')
+     */
+    public function icon(string $markup): static
+    {
+        $this->icon = $markup;
 
         return $this;
     }

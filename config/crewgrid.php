@@ -60,4 +60,25 @@ return [
 
     'classes' => [],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Icons
+    |--------------------------------------------------------------------------
+    |
+    | The grid ships Font Awesome 4 markup (that is what the themes were built
+    | against). Override the keys you need for a different set - values are
+    | markup, not class names, so inline SVG works too. Map a key to '' and
+    | that spot renders nothing. Keys: filter, columns, clear, show_all,
+    | resize, load_more, loading, sort, sort_asc, sort_desc - see
+    | CrewGrid\Grid::DEFAULT_ICONS.
+    |
+    |     'icons' => [
+    |         'filter' => '<i class="bi bi-funnel"></i>',
+    |         'sort_asc' => '<svg class="h-3 w-3" ...>...</svg>',
+    |     ],
+    |
+    */
+
+    'icons' => [],
+
 ];

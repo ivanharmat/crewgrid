@@ -211,6 +211,35 @@ php artisan vendor:publish --tag=crewgrid-views
 
 Views resolve per file, so delete the ones you didn't mean to own — whatever you keep is frozen at that version and stops receiving updates.
 
+### Icons
+
+The themes ship **Font Awesome 4** markup, because that is what they were built against. Nothing is hardcoded in the views — every icon comes from a map you can override, a key at a time or wholesale:
+
+```php
+// config/crewgrid.php
+'icons' => [
+    'filter' => '<i class="bi bi-funnel"></i>',                 // Bootstrap Icons
+    'sort_asc' => '<svg class="h-3 w-3" viewBox="0 0 20 20">…</svg>',  // inline SVG
+    'loading' => '',                                            // render nothing
+],
+```
+
+Values are **markup, not class names**, so any icon set works — Font Awesome 6, Bootstrap Icons, Heroicons, Lucide, inline SVG. A key mapped to `''` renders nothing rather than a broken glyph, and a key you leave out keeps its default. Per grid, use `public array $icons = [...]`.
+
+Keys: `filter`, `columns`, `clear`, `show_all`, `resize`, `load_more`, `loading`, `sort`, `sort_asc`, `sort_desc` — see `CrewGrid\Grid::DEFAULT_ICONS`.
+
+**Your own icons.** Column headers and action buttons take them too:
+
+```php
+Column::make('Date', 'timestamp')->icon('<i class="fa fa-calendar"></i>');
+
+$this->actionLink('Estimate', $url, 'info', icon: '<i class="fa fa-file-o"></i>');
+```
+
+Both take markup and render it unescaped — it is yours, not user data. The action link's *label* is still escaped.
+
+If you use no icon font at all, map every key to `''` and the grid renders on text alone.
+
 ### Tailwind setup
 
 The Tailwind theme uses utility classes, so Tailwind has to be told to scan the package or they will be purged. It needs **two** paths — the Blade views, and the PHP file the control classes live in:
@@ -224,7 +253,7 @@ content: [
 ],
 ```
 
-The second one is easy to miss. Theme markup is in Blade, but the button, input and `action.*` variant classes are values in `Grid::DEFAULT_CLASSES` — a PHP file the scanner has no reason to look at otherwise. Without it the grid itself renders correctly while every button comes out unstyled.
+The second one is easy to miss. Theme markup is in Blade, but the button, input and `action.*` variant classes are values in `Grid::DEFAULT_CLASSES` — a PHP file the scanner has no reason to look at otherwise. Leaving it out costs 21 utilities (measured against Tailwind 3): the table renders correctly, but every `action.*` button loses its background colour, the per-page select and the hidden-column badge lose their padding and shape, and — the one that actually matters — inputs lose `focus:ring-1` / `focus:border-indigo-500` / `focus:outline-none`, so keyboard focus becomes invisible.
 
 The alternative, if you would rather not point Tailwind at `vendor/` twice, is to define the classes in your own config, where your scanner already looks:
 

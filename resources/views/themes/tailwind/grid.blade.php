@@ -7,13 +7,13 @@
             @endif
         </div>
         <div class="ml-auto flex items-center gap-2">
-            <span wire:loading.delay class="text-sm text-gray-500">Loading <i class="fa fa-spinner fa-spin"></i></span>
+            <span wire:loading.delay class="text-sm text-gray-500">Loading {!! $this->icon('loading') !!}</span>
             @if($this->hasDraggedWidths())
-                <button type="button" class="{{ $this->uiClass('button') }}" wire:click="resetColumnWidths" title="Reset column widths"><i class="fa fa-arrows-h"></i> Reset Widths</button>
+                <button type="button" class="{{ $this->uiClass('button') }}" wire:click="resetColumnWidths" title="Reset column widths">{!! $this->icon('resize') !!} Reset Widths</button>
             @endif
             <div x-data="{ open: false }" @click.outside="open = false" class="crewgrid-th-filter">
                 <button type="button" class="{{ $this->uiClass('button') }}" @click="open = !open" title="Show or hide columns">
-                    <i class="fa fa-columns"></i> Columns
+                    {!! $this->icon('columns') !!} Columns
                     @php $hiddenCount = count($pickerColumns) - count($columns); @endphp
                     @if($hiddenCount > 0)
                         <span class="{{ $this->uiClass('badge') }}">{{ $hiddenCount }}</span>
@@ -27,19 +27,19 @@
                             {{-- A filter on a hidden column still applies - say so, or it
                                  looks like the grid is dropping rows for no reason. --}}
                             @if($this->hasActiveFilter($pickerColumn))
-                                <i class="fa fa-filter text-indigo-600" title="Filtered"></i>
+                                <span title="Filtered" class="text-indigo-600">{!! $this->icon('filter') !!}</span>
                             @endif
                         </label>
                     @endforeach
                     @if($hiddenCount > 0)
                         <div class="crewgrid-popover-footer">
-                            <a href="#" class="{{ $this->uiClass('link') }}" wire:click.prevent="showAllColumns"><i class="fa fa-eye"></i> Show All</a>
+                            <a href="#" class="{{ $this->uiClass('link') }}" wire:click.prevent="showAllColumns">{!! $this->icon('show_all') !!} Show All</a>
                         </div>
                     @endif
                 </div>
             </div>
             @if(!empty($filters) || $search !== '')
-                <button type="button" class="{{ $this->uiClass('button') }}" wire:click="clearFilters"><i class="fa fa-times"></i> Clear Filters</button>
+                <button type="button" class="{{ $this->uiClass('button') }}" wire:click="clearFilters">{!! $this->icon('clear') !!} Clear Filters</button>
             @endif
             <select class="{{ $this->uiClass('select') }}" wire:model.live="perPage" title="Rows per page">
                 @foreach($perPageOptions as $option)
@@ -66,13 +66,14 @@
                             {{-- Only the label truncates. The filter sits outside this
                                  wrapper so its popover is never clipped by the ellipsis. --}}
                             <span class="crewgrid-th-label">
+                                @if(!is_null($column->icon)){!! $column->icon !!} @endif
                                 @if($column->sortable)
                                     <a href="#" class="hover:underline" wire:click.prevent="sortBy('{{ $column->key() }}')">
                                         {{ $column->label }}
                                         @if($sortField === $column->key())
-                                            <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'asc' : 'desc' }}"></i>
+                                            {!! $this->icon($sortDirection === 'asc' ? 'sort_asc' : 'sort_desc') !!}
                                         @else
-                                            <i class="fa fa-sort text-gray-400"></i>
+                                            {!! $this->icon('sort') !!}
                                         @endif
                                     </a>
                                 @else
@@ -86,7 +87,7 @@
                                 @endphp
                                 <div x-data="{ open: false, q: '' }" @click.outside="open = false" class="crewgrid-th-filter">
                                     <a href="#" @click.prevent="open = !open" title="Filter" class="{{ $filterActive ? 'text-indigo-600' : 'text-gray-400' }}">
-                                        <i class="fa fa-filter"></i>
+                                        {!! $this->icon('filter') !!}
                                     </a>
                                     <div x-show="open" x-cloak class="crewgrid-popover">
                                         @if($column->filterType === 'text')
@@ -109,7 +110,7 @@
                                         @endif
                                         @if($filterActive)
                                             <div class="crewgrid-popover-footer">
-                                                <a href="#" class="{{ $this->uiClass('link') }}" wire:click.prevent="$set('filters.{{ $column->key() }}', {{ $column->filterType === 'text' ? "''" : '[]' }})"><i class="fa fa-times"></i> Clear</a>
+                                                <a href="#" class="{{ $this->uiClass('link') }}" wire:click.prevent="$set('filters.{{ $column->key() }}', {{ $column->filterType === 'text' ? "''" : '[]' }})">{!! $this->icon('clear') !!} Clear</a>
                                             </div>
                                         @endif
                                     </div>
@@ -145,7 +146,7 @@
             <span class="text-sm text-gray-500">Showing {{ $rows->count() }} of {{ number_format($rows->total()) }}</span><br>
             @if($rows->count() < $rows->total())
                 <button type="button" class="{{ $this->uiClass('button') }} mt-1" wire:click="loadMore" wire:loading.attr="disabled">
-                    <i class="fa fa-angle-double-down"></i> Load More
+                    {!! $this->icon('load_more') !!} Load More
                 </button>
             @endif
         </div>

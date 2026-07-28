@@ -81,6 +81,37 @@ abstract class Grid extends Component
      */
     public array $classes = [];
 
+    /**
+     * Markup for the icons the grid renders. Font Awesome 4 by default because
+     * that is what the themes were written against - override the whole map or
+     * a few keys in config('crewgrid.icons') for a different set, including
+     * inline SVG (Heroicons, Lucide). An icon set that has no equivalent for a
+     * key can map it to '' and that spot simply renders nothing.
+     *
+     * @var array<string, string>
+     */
+    public const DEFAULT_ICONS = [
+        'filter' => '<i class="fa fa-filter"></i>',
+        'columns' => '<i class="fa fa-columns"></i>',
+        'clear' => '<i class="fa fa-times"></i>',
+        'show_all' => '<i class="fa fa-eye"></i>',
+        'resize' => '<i class="fa fa-arrows-h"></i>',
+        'load_more' => '<i class="fa fa-angle-double-down"></i>',
+        'loading' => '<i class="fa fa-spinner fa-spin"></i>',
+        // crewgrid-muted rather than text-muted / text-gray-400: the icon map
+        // is shared by every theme, so it cannot lean on a framework's class.
+        'sort' => '<i class="fa fa-sort crewgrid-muted"></i>',
+        'sort_asc' => '<i class="fa fa-sort-asc"></i>',
+        'sort_desc' => '<i class="fa fa-sort-desc"></i>',
+    ];
+
+    /**
+     * Icon overrides for this grid.
+     *
+     * @var array<string, string>
+     */
+    public array $icons = [];
+
     #[Url(as: 'sort', except: '')]
     public string $sortField = '';
 
@@ -441,17 +472,39 @@ abstract class Grid extends Component
     }
 
     /**
+     * Markup for one of the grid's icons, rendered unescaped - it is author
+     * markup from the icon map, never user data. An unknown or blank key
+     * renders nothing rather than a broken glyph, so an icon set that has no
+     * equivalent can simply leave it out.
+     */
+    public function icon(string $name): string
+    {
+        $icons = array_merge(
+            self::DEFAULT_ICONS,
+            (array) config('crewgrid.icons', []),
+            $this->icons
+        );
+
+        return (string) ($icons[$name] ?? '');
+    }
+
+    /**
      * A themed link for an action cell, escaped and ready to return from a
      * Column::format() callback on an ->html() column. $variant picks an
      * "action.{variant}" class, falling back to the plain action button.
      *
      * Column::make('', 'id')->html()->format(fn ($value, $row) =>
      *     $this->actionLink('Estimate', url('estimates/'.$row->estimate_id), 'info'))
+     *
+     * $icon is markup, not a class name, so any icon set works:
+     *
+     *     $this->actionLink('Estimate', $url, 'info', icon: '<i class="fa fa-file-o"></i>')
      */
-    public function actionLink(string $label, string $url, string $variant = '', bool $new_tab = true): string
+    public function actionLink(string $label, string $url, string $variant = '', bool $new_tab = true, string $icon = ''): string
     {
         return '<a href="'.e($url).'" class="'.e($this->uiClass($variant === '' ? 'action' : 'action.'.$variant)).'"'.
-            ($new_tab ? ' target="_blank" rel="noopener"' : '').'>'.e($label).'</a>';
+            ($new_tab ? ' target="_blank" rel="noopener"' : '').'>'.
+            ($icon === '' ? '' : $icon.' ').e($label).'</a>';
     }
 
     /**

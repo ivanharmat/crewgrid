@@ -80,6 +80,9 @@
 
     .crewgrid-align-right { text-align: right; }
     .crewgrid-align-center { text-align: center; }
+    /* Used by the shared icon map, which cannot reach for a framework's own
+       muted-text class because it serves every theme. */
+    .crewgrid-muted { opacity: .45; }
 
     .crewgrid-resizer {
         position: absolute;
