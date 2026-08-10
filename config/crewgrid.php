@@ -43,6 +43,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Excel export
+    |--------------------------------------------------------------------------
+    |
+    | "export" shows the Excel button on every grid (a grid can override it
+    | via its $exportable property). The export streams the current result
+    | set - filters, search and sort applied, all pages - reading the query
+    | "export_chunk" rows at a time.
+    |
+    */
+
+    'export' => true,
+
+    'export_chunk' => 500,
+
+    /*
+    |--------------------------------------------------------------------------
     | Control classes
     |--------------------------------------------------------------------------
     |

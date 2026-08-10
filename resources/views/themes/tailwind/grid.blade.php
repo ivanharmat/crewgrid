@@ -8,6 +8,9 @@
         </div>
         <div class="ml-auto flex items-center gap-2">
             <span wire:loading.delay class="text-sm text-gray-500">Loading {!! $this->icon('loading') !!}</span>
+            @if($this->isExportable())
+                <button type="button" class="{{ $this->uiClass('button') }}" wire:click="export" wire:loading.attr="disabled" title="Export the current view to Excel - all pages, filters applied">{!! $this->icon('export') !!} Excel</button>
+            @endif
             @if($this->hasDraggedWidths())
                 <button type="button" class="{{ $this->uiClass('button') }}" wire:click="resetColumnWidths" title="Reset column widths">{!! $this->icon('resize') !!} Reset Widths</button>
             @endif

@@ -3,6 +3,7 @@
 namespace CrewGrid;
 
 use CrewGrid\Columns\Column;
+use CrewGrid\Export\XlsxWriter;
 use Illuminate\Contracts\Database\Eloquent\Builder as BuilderContract;
 use InvalidArgumentException;
 use Livewire\Attributes\Url;
@@ -103,6 +104,7 @@ abstract class Grid extends Component
         'sort' => '<i class="fa fa-sort crewgrid-muted"></i>',
         'sort_asc' => '<i class="fa fa-sort-asc"></i>',
         'sort_desc' => '<i class="fa fa-sort-desc"></i>',
+        'export' => '<i class="fa fa-file-excel-o"></i>',
     ];
 
     /**
@@ -130,6 +132,9 @@ abstract class Grid extends Component
 
     /** Override to force a theme for this grid ("bootstrap3", "tailwind", ...). */
     public ?string $theme = null;
+
+    /** Whether this grid offers an Excel export. Null falls back to config. */
+    public ?bool $exportable = null;
 
     /** "pager" or "infinite" - how additional rows load. */
     public string $loadMode = 'pager';
@@ -505,6 +510,63 @@ abstract class Grid extends Component
         return '<a href="'.e($url).'" class="'.e($this->uiClass($variant === '' ? 'action' : 'action.'.$variant)).'"'.
             ($new_tab ? ' target="_blank" rel="noopener"' : '').'>'.
             ($icon === '' ? '' : $icon.' ').e($label).'</a>';
+    }
+
+    public function isExportable(): bool
+    {
+        return $this->exportable ?? (bool) config('crewgrid.export', true);
+    }
+
+    /**
+     * Download the current result set - filters, quick search and sort
+     * applied, every page, following what the Kendo grids' Excel button does.
+     * Visible columns only, so the column picker shapes the file, minus any
+     * marked notExportable(); each cell goes through Column::exportValue().
+     */
+    public function export()
+    {
+        if (! $this->isExportable()) {
+            abort(403);
+        }
+
+        $columns = array_values(array_filter(
+            $this->visibleColumns(),
+            fn (Column $column) => $column->exportable
+        ));
+        if ($columns === []) {
+            return null;
+        }
+
+        $query = $this->buildQuery();
+        // lazy() pages with limit/offset, so an unordered query could repeat
+        // or drop rows between chunks - anchor it on the primary key.
+        if (empty($query->getQuery()->orders)) {
+            $query->orderBy($query->getModel()->getQualifiedKeyName());
+        }
+
+        $writer = new XlsxWriter;
+        $writer->writeRow(array_map(fn (Column $column) => $column->label, $columns), bold: true);
+        foreach ($query->lazy((int) config('crewgrid.export_chunk', 500)) as $row) {
+            $writer->writeRow(array_map(fn (Column $column) => $column->exportValue($row), $columns));
+        }
+
+        $path = (string) tempnam(sys_get_temp_dir(), 'crewgrid-xlsx');
+        $writer->save($path);
+
+        return response()->streamDownload(function () use ($path) {
+            readfile($path);
+            @unlink($path);
+        }, $this->exportFilename(), [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * "user-actions-grid-2026-08-08.xlsx" - override for a nicer name.
+     */
+    protected function exportFilename(): string
+    {
+        return $this->getName().'-'.date('Y-m-d').'.xlsx';
     }
 
     /**

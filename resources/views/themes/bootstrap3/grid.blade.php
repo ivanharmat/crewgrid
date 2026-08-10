@@ -8,6 +8,9 @@
         </div>
         <div class="col-sm-8 text-right">
             <span wire:loading.delay class="text-muted small" style="margin-right: 8px;">Loading {!! $this->icon('loading') !!}</span>
+            @if($this->isExportable())
+                <button type="button" class="{{ $this->uiClass('button') }}" wire:click="export" wire:loading.attr="disabled" title="Export the current view to Excel - all pages, filters applied">{!! $this->icon('export') !!} Excel</button>
+            @endif
             @if($this->hasDraggedWidths())
                 <button type="button" class="{{ $this->uiClass('button') }}" wire:click="resetColumnWidths" title="Reset column widths">{!! $this->icon('resize') !!} Reset Widths</button>
             @endif

@@ -107,6 +107,9 @@ That's it — sorting, filtering, quick search, pagination and URL state all wor
 | `->align('right')` | `left` (default), `center` or `right`. |
 | `->nowrap()` | Keep the cell on one line and ellipsize. Cells wrap by default, so narrowing a column never hides content. |
 | `->notResizable()` | Fix this column's width — no drag handle. |
+| `->icon('<i class="fa fa-user"></i>')` | Icon markup before the header label — any icon set, including inline SVG. |
+| `->exportAs(Closure $callback)` | The value this column writes to Excel: `fn ($value, $row)`. |
+| `->notExportable()` | Leave the column out of Excel exports (action/button columns). |
 
 All default filter behaviors have callback escape hatches, so computed columns, joins and cross-database filters are all expressible.
 
@@ -270,6 +273,34 @@ The alternative, if you would rather not point Tailwind at `vendor/` twice, is t
 Config files are not scanned either by default, so add `'./config/crewgrid.php'` to `content` if you take that route — the point is that it is *your* file, in a path you control, rather than one inside `vendor/`.
 
 Table padding, striping, hover and row lines ship as plain CSS with the theme rather than as utilities, so a grid still renders legibly if you get any of this wrong — you'll just get an unstyled toolbar rather than an unreadable page. Icons are Font Awesome class names (`fa fa-filter`), the same as the Bootstrap themes; swap them in a published view if you use a different icon set.
+
+## Excel export
+
+Every grid has an **Excel** button that downloads the current result set — filters, quick search and sort applied, **all pages**, not just the visible one. Visible columns shape the file (the column picker applies), and rows stream from the database in chunks, so large grids export without loading everything into memory.
+
+The `.xlsx` is produced by the package's own writer — no spreadsheet library required, just `ext-zip`. Strings are written as inline strings (a value starting with `=` arrives as text, never as a formula), PHP ints and floats become numeric cells, and numeric-looking *strings* stay text so item numbers keep their leading zeros.
+
+What a cell exports:
+
+1. `->exportAs(fn ($value, $row) => ...)` if set — always wins.
+2. Otherwise the `->format()` result, for plain text columns.
+3. `->html()` and `->view()` columns fall back to the raw field value — their rendered output is markup, which has no place in a spreadsheet. Give them an `->exportAs()` if the raw value isn't what you want, or `->notExportable()` to drop them.
+
+Configuration:
+
+```php
+'export' => true,        // the button on every grid; a grid can override via public ?bool $exportable
+'export_chunk' => 500,   // rows read per query while streaming
+```
+
+Rename the file per grid:
+
+```php
+protected function exportFilename(): string
+{
+    return 'orders-'.date('Y-m-d').'.xlsx';
+}
+```
 
 ## URL state
 

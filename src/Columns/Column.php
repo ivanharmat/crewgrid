@@ -52,6 +52,10 @@ class Column
     /** Markup rendered before the header label - author markup, not escaped. */
     public ?string $icon = null;
 
+    public bool $exportable = true;
+
+    public ?Closure $exportCallback = null;
+
     final private function __construct(string $label, string $field)
     {
         $this->label = $label;
@@ -191,6 +195,48 @@ class Column
         $this->icon = $markup;
 
         return $this;
+    }
+
+    /**
+     * Leave this column out of Excel exports - an action column of buttons
+     * has nothing to say in a spreadsheet.
+     */
+    public function notExportable(): static
+    {
+        $this->exportable = false;
+
+        return $this;
+    }
+
+    /**
+     * The value this column exports: fn ($value, $row) => ... Without it,
+     * plain columns export their format() result and html()/view() columns
+     * fall back to the raw field value, since their rendered output is markup.
+     */
+    public function exportAs(Closure $callback): static
+    {
+        $this->exportCallback = $callback;
+
+        return $this;
+    }
+
+    /**
+     * What lands in the spreadsheet cell for $row, following the contract
+     * described on exportAs().
+     */
+    public function exportValue($row)
+    {
+        $value = data_get($row, $this->field);
+
+        if (! is_null($this->exportCallback)) {
+            return call_user_func($this->exportCallback, $value, $row);
+        }
+
+        if (! is_null($this->formatCallback) && ! $this->html && is_null($this->view)) {
+            return call_user_func($this->formatCallback, $value, $row);
+        }
+
+        return $value;
     }
 
     /**
