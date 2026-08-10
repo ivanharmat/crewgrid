@@ -1,7 +1,15 @@
 {
     "name": "ivanharmat/crewgrid",
     "description": "A server-driven Livewire data grid with filtering, sorting, pagination and shareable URL state - themeable for Bootstrap 3, Bootstrap 5 and Tailwind.",
-    "keywords": ["laravel", "livewire", "datatable", "grid", "table", "bootstrap", "tailwind"],
+    "keywords": [
+        "laravel",
+        "livewire",
+        "datatable",
+        "grid",
+        "table",
+        "bootstrap",
+        "tailwind"
+    ],
     "license": "MIT",
     "authors": [
         {
@@ -27,5 +35,17 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "require-dev": {
+        "orchestra/testbench": "^8.22|^9.0|^10.0|^11.0",
+        "phpunit/phpunit": "^10.5|^11.0|^12.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "CrewGrid\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    }
 }

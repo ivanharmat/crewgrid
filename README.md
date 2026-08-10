@@ -314,7 +314,7 @@ Opening that link restores the exact grid view.
 
 ## Status
 
-Early release (`0.x`) — extracted from production use, but the API may still move before `1.0`. Feedback and issues welcome.
+Stable (`1.x`) — extracted from production use, with its own test suite run across the full support matrix (Laravel 10–13, PHP 8.1–8.5, including a `--prefer-lowest` floor job) on CI. Feedback and issues welcome.
 
 ## License
 
