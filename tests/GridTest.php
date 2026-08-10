@@ -149,6 +149,21 @@ class GridTest extends TestCase
         $this->assertStringContainsString('target="_blank"', $html);
     }
 
+    public function test_row_class_lands_on_the_tr(): void
+    {
+        $grid = new class extends \CrewGrid\Tests\Fixtures\OrdersGrid
+        {
+            public function rowClass($row): string
+            {
+                return $row->status === 'paid' ? 'row-paid' : '';
+            }
+        };
+
+        $html = Livewire::test($grid::class)->html();
+        $this->assertStringContainsString('class="row-paid"', $html);
+        $this->assertSame(2, substr_count($html, 'row-paid'), 'Only the two paid rows carry the class.');
+    }
+
     public function test_url_state_round_trips(): void
     {
         Livewire::withQueryParams(['sort' => 'total', 'dir' => 'desc', 'q' => 'Acme'])

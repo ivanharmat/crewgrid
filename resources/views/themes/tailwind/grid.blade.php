@@ -128,7 +128,7 @@
             </thead>
             <tbody>
                 @forelse($rows as $row)
-                    <tr wire:key="crewgrid-row-{{ $row->getKey() }}">
+                    <tr wire:key="crewgrid-row-{{ $row->getKey() }}" @if($this->rowClass($row) !== '') class="{{ $this->rowClass($row) }}" @endif>
                         @foreach($columns as $column)
                             <td class="{{ $column->cssClass() }}">@include('crewgrid::cell')</td>
                         @endforeach

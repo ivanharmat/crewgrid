@@ -512,6 +512,22 @@ abstract class Grid extends Component
             ($icon === '' ? '' : $icon.' ').e($label).'</a>';
     }
 
+    /**
+     * CSS classes for a row's <tr>, e.g. status colouring. Override in a grid:
+     *
+     *     protected function rowClass($row): string
+     *     {
+     *         return $row->overdue ? 'row-overdue' : '';
+     *     }
+     *
+     * Classes, not inline styles, so the page owns its palette and themes can
+     * restyle without the grid knowing any colours.
+     */
+    public function rowClass($row): string
+    {
+        return '';
+    }
+
     public function isExportable(): bool
     {
         return $this->exportable ?? (bool) config('crewgrid.export', true);

@@ -132,6 +132,17 @@ protected function loadPreferences(): array
 
 No build step and nothing to add to your layout — the small stylesheet and resize script are emitted inline once per page.
 
+## Row classes
+
+Colour or mark whole rows by overriding `rowClass()` on the grid — it returns CSS classes for the `<tr>`, so the page owns its palette:
+
+```php
+public function rowClass($row): string
+{
+    return $row->overdue ? 'row-overdue' : '';
+}
+```
+
 ## Loading modes
 
 ```php
