@@ -136,6 +136,9 @@ abstract class Grid extends Component
     /** Whether this grid offers an Excel export. Null falls back to config. */
     public ?bool $exportable = null;
 
+    /** Where the pager row renders: "bottom", "top" or "both". Null falls back to config. */
+    public ?string $paginationPosition = null;
+
     /** "pager" or "infinite" - how additional rows load. */
     public string $loadMode = 'pager';
 
@@ -526,6 +529,18 @@ abstract class Grid extends Component
     public function rowClass($row): string
     {
         return '';
+    }
+
+    /**
+     * Whether the pager row renders at this edge of the table ("top" or
+     * "bottom"). Infinite mode ignores the top pager - its Load More belongs
+     * under the rows it extends.
+     */
+    public function showsPagerAt(string $edge): bool
+    {
+        $position = $this->paginationPosition ?? (string) config('crewgrid.pagination_position', 'bottom');
+
+        return $position === 'both' || $position === $edge;
     }
 
     public function isExportable(): bool

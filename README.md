@@ -143,6 +143,15 @@ public function rowClass($row): string
 }
 ```
 
+## Pager position
+
+The pager row renders below the table by default; put it above, or at both ends for long pages:
+
+```php
+'pagination_position' => 'bottom',   // config: "bottom", "top" or "both"
+public ?string $paginationPosition = 'both';   // or per grid
+```
+
 ## Loading modes
 
 ```php

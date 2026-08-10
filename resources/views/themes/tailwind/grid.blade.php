@@ -52,6 +52,9 @@
         </div>
     </div>
 
+    @if($loadMode !== 'infinite' && $this->showsPagerAt('top'))
+        @include('crewgrid::themes.tailwind.pager')
+    @endif
     <div class="overflow-x-auto" @pointerdown="start($event)">
         <table class="w-full text-left text-sm crewgrid-table crewgrid-plain {{ $this->isBordered() ? 'crewgrid-bordered' : '' }} {{ $this->hasFixedLayout() ? 'crewgrid-fixed' : '' }}">
             {{-- Server-rendered, so widths survive a morph and the column set can
@@ -153,12 +156,7 @@
                 </button>
             @endif
         </div>
-    @else
-        <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
-            <div class="text-sm text-gray-500">
-                Showing {{ number_format($rows->firstItem() ?? 0) }}-{{ number_format($rows->lastItem() ?? 0) }} of {{ number_format($rows->total()) }}
-            </div>
-            <div>{{ $rows->onEachSide(1)->links('crewgrid::themes.tailwind.pagination') }}</div>
-        </div>
+    @elseif($this->showsPagerAt('bottom'))
+        @include('crewgrid::themes.tailwind.pager')
     @endif
 </div>

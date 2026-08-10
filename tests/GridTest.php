@@ -164,6 +164,25 @@ class GridTest extends TestCase
         $this->assertSame(2, substr_count($html, 'row-paid'), 'Only the two paid rows carry the class.');
     }
 
+    public function test_the_pager_can_render_top_bottom_or_both(): void
+    {
+        config()->set('crewgrid.per_page_options', [2, 15]);
+
+        $bottom_only = Livewire::test(OrdersGrid::class)->set('perPage', 2)->html();
+        $this->assertSame(1, substr_count($bottom_only, 'crewgrid-pager'));
+        $this->assertGreaterThan(strpos($bottom_only, '<thead'), strpos($bottom_only, 'crewgrid-pager'),
+            'The default pager sits below the table.');
+
+        $both = Livewire::test(OrdersGrid::class, ['paginationPosition' => 'both'])->set('perPage', 2)->html();
+        $this->assertSame(2, substr_count($both, 'crewgrid-pager'));
+        $this->assertLessThan(strpos($both, '<thead'), strpos($both, 'crewgrid-pager'),
+            'With "both", a pager also sits above the table.');
+
+        $top = Livewire::test(OrdersGrid::class, ['paginationPosition' => 'top'])->set('perPage', 2)->html();
+        $this->assertSame(1, substr_count($top, 'crewgrid-pager'));
+        $this->assertLessThan(strpos($top, '<thead'), strpos($top, 'crewgrid-pager'));
+    }
+
     public function test_url_state_round_trips(): void
     {
         Livewire::withQueryParams(['sort' => 'total', 'dir' => 'desc', 'q' => 'Acme'])

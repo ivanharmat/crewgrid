@@ -28,6 +28,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Pager position
+    |--------------------------------------------------------------------------
+    |
+    | Where the pager row renders: "bottom", "top" or "both". Any grid can
+    | override via its $paginationPosition property. Infinite mode ignores
+    | the top pager.
+    |
+    */
+
+    'pagination_position' => 'bottom',
+
+    /*
+    |--------------------------------------------------------------------------
     | Appearance
     |--------------------------------------------------------------------------
     |

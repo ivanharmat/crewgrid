@@ -52,6 +52,9 @@
         </div>
     </div>
 
+    @if($loadMode !== 'infinite' && $this->showsPagerAt('top'))
+        @include('crewgrid::themes.bootstrap3.pager')
+    @endif
     <div class="table-responsive" @pointerdown="start($event)">
         <table class="table table-striped table-hover table-condensed crewgrid-table {{ $this->isBordered() ? 'crewgrid-bordered' : '' }} {{ $this->hasFixedLayout() ? 'crewgrid-fixed' : '' }}">
             {{-- Server-rendered, so widths survive a morph and the column set can
@@ -159,14 +162,7 @@
                 </button>
             @endif
         </div>
-    @else
-        <div class="row">
-            <div class="col-sm-4 text-muted small" style="padding-top: 8px;">
-                Showing {{ number_format($rows->firstItem() ?? 0) }}-{{ number_format($rows->lastItem() ?? 0) }} of {{ number_format($rows->total()) }}
-            </div>
-            <div class="col-sm-8 text-right">
-                {{ $rows->onEachSide(1)->links('crewgrid::themes.bootstrap3.pagination') }}
-            </div>
-        </div>
+    @elseif($this->showsPagerAt('bottom'))
+        @include('crewgrid::themes.bootstrap3.pager')
     @endif
 </div>
