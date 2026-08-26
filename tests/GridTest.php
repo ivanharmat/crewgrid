@@ -36,6 +36,9 @@ class GridTest extends TestCase
             ->assertSeeHtml('class="crewgrid-group-row"')
             ->assertSeeHtml('crewgrid-group-count')
             ->assertSeeHtml('crewgridOpen')
+            ->assertSeeHtml('crewgridAllState')
+            ->assertSee('Show All')
+            ->assertSee('Hide All')
             ->assertSee('ORD-003');
 
         Livewire::test(OrdersGrid::class)

@@ -135,7 +135,7 @@
                     @endforeach
                 </tr>
             </thead>
-            <tbody @if($this->isGrouped()) x-data="{ crewgridOpen: {} }" @endif>
+            <tbody @if($this->isGrouped()) x-data="{ crewgridOpen: {}, crewgridAllState: null }" @endif>
                 @include('crewgrid::rows', ['emptyCellClass' => 'text-center text-muted', 'emptyCellStyle' => 'padding: 25px;'])
             </tbody>
         </table>

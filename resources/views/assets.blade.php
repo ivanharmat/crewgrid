@@ -95,6 +95,14 @@
     }
     .crewgrid-group-row > td:hover { background: #e4e8ec; }
     .crewgrid-group-count { opacity: .55; font-weight: 400; }
+    .crewgrid-group-chevron { float: right; opacity: .6; }
+    .crewgrid-group-toolbar > td {
+        text-align: right;
+        background: #f6f7f9;
+        padding: 3px 8px;
+        font-size: 12px;
+    }
+    .crewgrid-group-toolbar a { margin-left: 12px; text-decoration: none; }
 
     .crewgrid-resizer {
         position: absolute;

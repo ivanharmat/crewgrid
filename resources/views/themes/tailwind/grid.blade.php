@@ -129,7 +129,7 @@
                     @endforeach
                 </tr>
             </thead>
-            <tbody @if($this->isGrouped()) x-data="{ crewgridOpen: {} }" @endif>
+            <tbody @if($this->isGrouped()) x-data="{ crewgridOpen: {}, crewgridAllState: null }" @endif>
                 @include('crewgrid::rows', ['emptyCellClass' => 'py-6 text-center text-gray-500'])
             </tbody>
         </table>
