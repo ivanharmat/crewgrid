@@ -105,6 +105,8 @@ abstract class Grid extends Component
         'sort_asc' => '<i class="fa fa-sort-asc"></i>',
         'sort_desc' => '<i class="fa fa-sort-desc"></i>',
         'export' => '<i class="fa fa-file-excel-o"></i>',
+        'group_closed' => '<i class="fa fa-chevron-right"></i>',
+        'group_open' => '<i class="fa fa-chevron-down"></i>',
     ];
 
     /**
@@ -529,6 +531,77 @@ abstract class Grid extends Component
     public function rowClass($row): string
     {
         return '';
+    }
+
+    /**
+     * Attribute whose value bands the page's rows into collapsible groups -
+     * one clickable heading row per group, member rows folded beneath it.
+     * Null (the default) renders the flat grid. Rows are banded in the order
+     * the query returns them, so groups appear wherever their best-sorted
+     * row lands and never re-sort the data:
+     *
+     *     protected function groupBy(): ?string
+     *     {
+     *         return 'rfp_id';
+     *     }
+     */
+    protected function groupBy(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Heading markup for a group band, given the group's first row (in the
+     * current sort) and its row count on this page. Override for a richer
+     * heading; the result renders unescaped, so escape any data you include.
+     */
+    protected function groupHeading($row, int $count): string
+    {
+        return e((string) $row->{$this->groupBy()}).' <span class="crewgrid-group-count">('.$count.')</span>';
+    }
+
+    /**
+     * Whether group bands start folded. Collapsed by default - one row per
+     * group until it is clicked open.
+     */
+    protected function groupStartsCollapsed(): bool
+    {
+        return true;
+    }
+
+    public function isGrouped(): bool
+    {
+        return $this->groupBy() !== null;
+    }
+
+    public function groupDefaultOpen(): bool
+    {
+        return ! $this->groupStartsCollapsed();
+    }
+
+    /**
+     * The page's rows banded by the groupBy() attribute, preserving each
+     * group's first appearance in the current sort order.
+     *
+     * @return list<array{key: string, hash: string, heading: string, rows: list<mixed>}>
+     */
+    public function groupedRows($rows): array
+    {
+        $key_field = $this->groupBy();
+        $groups = [];
+        foreach ($rows as $row) {
+            $key = (string) $row->{$key_field};
+            if (! isset($groups[$key])) {
+                $groups[$key] = ['key' => $key, 'hash' => md5($key), 'first' => $row, 'heading' => '', 'rows' => []];
+            }
+            $groups[$key]['rows'][] = $row;
+        }
+        foreach ($groups as &$group) {
+            $group['heading'] = $this->groupHeading($group['first'], count($group['rows']));
+            unset($group['first']);
+        }
+
+        return array_values($groups);
     }
 
     /**

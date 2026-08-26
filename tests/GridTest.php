@@ -3,6 +3,8 @@
 namespace CrewGrid\Tests;
 
 use CrewGrid\Grid;
+use CrewGrid\Tests\Fixtures\GroupedOrdersGrid;
+use CrewGrid\Tests\Fixtures\Order;
 use CrewGrid\Tests\Fixtures\OrdersGrid;
 use InvalidArgumentException;
 use Livewire\Livewire;
@@ -15,6 +17,29 @@ class GridTest extends TestCase
             ->assertSee('ORD-001')
             ->assertSee('Cedar &amp; Sons', false)
             ->assertSee('$250.00');
+    }
+
+    public function test_group_bands_form_by_key_preserving_first_appearance(): void
+    {
+        $grid = new GroupedOrdersGrid;
+        $groups = $grid->groupedRows(Order::orderBy('id')->get());
+
+        $this->assertSame(['Acme', 'Bravo', 'Cedar & Sons'], array_column($groups, 'key'), 'Groups appear in first-appearance order.');
+        $this->assertSame(['ORD-001', 'ORD-003'], collect($groups[0]['rows'])->pluck('reference')->all(), 'Non-adjacent rows of one key land in one band.');
+        $this->assertStringContainsString('Acme', $groups[0]['heading']);
+        $this->assertStringContainsString('(2)', $groups[0]['heading']);
+    }
+
+    public function test_grouped_grids_render_heading_rows_and_flat_grids_do_not(): void
+    {
+        Livewire::test(GroupedOrdersGrid::class)
+            ->assertSeeHtml('class="crewgrid-group-row"')
+            ->assertSeeHtml('crewgrid-group-count')
+            ->assertSeeHtml('crewgridOpen')
+            ->assertSee('ORD-003');
+
+        Livewire::test(OrdersGrid::class)
+            ->assertDontSeeHtml('class="crewgrid-group-row"');
     }
 
     public function test_sorting_toggles_direction(): void

@@ -129,20 +129,8 @@
                     @endforeach
                 </tr>
             </thead>
-            <tbody>
-                @forelse($rows as $row)
-                    <tr wire:key="crewgrid-row-{{ $row->getKey() }}" @if($this->rowClass($row) !== '') class="{{ $this->rowClass($row) }}" @endif>
-                        @foreach($columns as $column)
-                            <td class="{{ $column->cssClass() }}">@include('crewgrid::cell')</td>
-                        @endforeach
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="{{ count($columns) }}" class="py-6 text-center text-gray-500">
-                            No records found{{ !empty($filters) || $search !== '' ? ' - try adjusting the filters.' : '.' }}
-                        </td>
-                    </tr>
-                @endforelse
+            <tbody @if($this->isGrouped()) x-data="{ crewgridOpen: {} }" @endif>
+                @include('crewgrid::rows', ['emptyCellClass' => 'py-6 text-center text-gray-500'])
             </tbody>
         </table>
     </div>

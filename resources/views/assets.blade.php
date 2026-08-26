@@ -84,6 +84,18 @@
        muted-text class because it serves every theme. */
     .crewgrid-muted { opacity: .45; }
 
+    /* Collapsible group bands (Grid::groupBy) */
+    .crewgrid-group-row > td {
+        cursor: pointer;
+        font-weight: 600;
+        background: #eef1f4;
+        border-top: 2px solid #d6dade;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    .crewgrid-group-row > td:hover { background: #e4e8ec; }
+    .crewgrid-group-count { opacity: .55; font-weight: 400; }
+
     .crewgrid-resizer {
         position: absolute;
         top: 0;
