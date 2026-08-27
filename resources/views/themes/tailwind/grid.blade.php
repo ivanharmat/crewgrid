@@ -114,6 +114,8 @@
                                             <input type="date" class="{{ $this->uiClass('input') }} mb-1" wire:model.live="filters.{{ $column->key() }}.from" title="From">
                                             <input type="date" class="{{ $this->uiClass('input') }}" wire:model.live="filters.{{ $column->key() }}.to" title="To">
                                             @include('crewgrid::date-presets')
+                                        @elseif($column->filterType === 'number')
+                                            @include('crewgrid::number-filter')
                                         @endif
                                         @if($filterActive)
                                             <div class="crewgrid-popover-footer">

@@ -19,6 +19,23 @@ class GridTest extends TestCase
             ->assertSee('$250.00');
     }
 
+    public function test_number_filters_compare_with_the_chosen_operator(): void
+    {
+        Livewire::test(OrdersGrid::class)
+            ->set('filters.total', ['op' => '>', 'value' => '200'])
+            ->assertSee('ORD-002')->assertSee('ORD-004')->assertDontSee('ORD-001')
+            ->set('filters.total', ['op' => '!=', 'value' => '100'])
+            ->assertSee('ORD-002')->assertDontSee('ORD-001')
+            ->set('filters.total', ['op' => '<=', 'value' => '100'])
+            ->assertSee('ORD-001')->assertDontSee('ORD-004')
+            ->set('filters.total', ['op' => '', 'value' => '150'])
+            ->assertSee('ORD-002')->assertDontSee('ORD-001') // blank op defaults to larger-than
+            ->set('filters.total', ['op' => 'DROP TABLE', 'value' => '1'])
+            ->assertSee('ORD-001') // unknown operators are ignored, filter inert
+            ->set('filters.total', ['op' => '>', 'value' => ''])
+            ->assertSee('ORD-001'); // no number, no filtering
+    }
+
     public function test_date_filters_offer_quick_presets_that_set_both_bounds(): void
     {
         $grid = new OrdersGrid;

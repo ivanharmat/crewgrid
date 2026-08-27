@@ -89,11 +89,7 @@
                             @if(!is_null($column->filterType))
                                 @php
                                     $filterValue = $filters[$column->key()] ?? null;
-                                    $filterActive = match ($column->filterType) {
-                                        'multiselect' => is_array($filterValue) && count(array_filter($filterValue)) > 0,
-                                        'date_range' => is_array($filterValue) && (!empty($filterValue['from']) || !empty($filterValue['to'])),
-                                        default => is_string($filterValue) && trim($filterValue) !== '',
-                                    };
+                                    $filterActive = $this->hasActiveFilter($column);
                                     $filterOptions = $column->filterType === 'multiselect' ? $column->resolveFilterOptions() : [];
                                 @endphp
                                 <div x-data="{ open: false, q: '' }" @click.outside="open = false" class="crewgrid-th-filter">
@@ -120,6 +116,8 @@
                                             <input type="date" class="{{ $this->uiClass('input') }}" wire:model.live="filters.{{ $column->key() }}.from" title="From" style="margin-bottom: 4px;">
                                             <input type="date" class="{{ $this->uiClass('input') }}" wire:model.live="filters.{{ $column->key() }}.to" title="To">
                                             @include('crewgrid::date-presets')
+                                        @elseif($column->filterType === 'number')
+                                            @include('crewgrid::number-filter')
                                         @endif
                                         @if($filterActive)
                                             <div class="crewgrid-popover-footer">

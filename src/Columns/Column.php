@@ -116,6 +116,21 @@ class Column
     }
 
     /**
+     * Comparison filter for numeric columns: an operator dropdown (larger
+     * than, lower than, not equal to, ...) plus a number input. Without a
+     * callback the comparison applies to the column's field; with one it is
+     * called as fn ($query, string $operator, float $value) - the place to
+     * compare an aggregate via HAVING.
+     */
+    public function filterNumber(?Closure $callback = null): static
+    {
+        $this->filterType = 'number';
+        $this->filterCallback = $callback;
+
+        return $this;
+    }
+
+    /**
      * Transform the cell value: fn ($value, $row) => ...
      */
     public function format(Closure $callback): static

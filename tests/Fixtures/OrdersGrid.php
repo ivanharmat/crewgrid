@@ -28,6 +28,7 @@ class OrdersGrid extends Grid
 
             Column::make('Total', 'total')
                 ->sortable()
+                ->filterNumber()
                 ->format(fn ($value) => '$'.number_format($value, 2))
                 ->exportAs(fn ($value) => $value),
 

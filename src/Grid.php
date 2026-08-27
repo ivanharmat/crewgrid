@@ -91,6 +91,21 @@ abstract class Grid extends Component
      *
      * @var array<string, string>
      */
+    /**
+     * The comparisons a number filter accepts, in the order the dropdown
+     * offers them: label => SQL operator.
+     */
+    public const NUMBER_OPERATOR_LABELS = [
+        'Larger than' => '>',
+        'Equal or larger' => '>=',
+        'Lower than' => '<',
+        'Equal or lower' => '<=',
+        'Equal to' => '=',
+        'Not equal to' => '!=',
+    ];
+
+    public const NUMBER_OPERATORS = ['>', '>=', '<', '<=', '=', '!='];
+
     public const DEFAULT_ICONS = [
         'filter' => '<i class="fa fa-filter"></i>',
         'columns' => '<i class="fa fa-columns"></i>',
@@ -254,6 +269,24 @@ abstract class Grid extends Component
                 continue;
             }
 
+            if ($column->filterType === 'number') {
+                // ['op' => comparison, 'value' => number]; nothing applies
+                // until the number is filled and both parts are valid.
+                $operator = is_array($value) ? (string) ($value['op'] ?? '') : '';
+                $operator = $operator === '' ? '>' : $operator;
+                $number = is_array($value) ? trim((string) ($value['value'] ?? '')) : '';
+                if ($number === '' || ! is_numeric($number) || ! in_array($operator, self::NUMBER_OPERATORS, true)) {
+                    continue;
+                }
+                if (! is_null($column->filterCallback)) {
+                    call_user_func($column->filterCallback, $query, $operator, (float) $number);
+                } else {
+                    $query->where($column->field, $operator, (float) $number);
+                }
+
+                continue;
+            }
+
             if (! is_null($column->filterCallback)) {
                 call_user_func($column->filterCallback, $query, $value);
 
@@ -344,6 +377,7 @@ abstract class Grid extends Component
             'multiselect' => is_array($value) && count(array_filter($value)) > 0,
             'date_range' => is_array($value) && (! empty($value['from']) || ! empty($value['to'])),
             'text' => is_string($value) && trim($value) !== '',
+            'number' => is_array($value) && trim((string) ($value['value'] ?? '')) !== '',
             default => false,
         };
     }
