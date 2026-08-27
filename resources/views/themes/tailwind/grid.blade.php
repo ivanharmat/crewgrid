@@ -14,15 +14,15 @@
             @if($this->hasDraggedWidths())
                 <button type="button" class="{{ $this->uiClass('button') }}" wire:click="resetColumnWidths" title="Reset column widths">{!! $this->icon('resize') !!} Reset Widths</button>
             @endif
-            <div x-data="{ open: false }" @click.outside="open = false" class="crewgrid-th-filter">
-                <button type="button" class="{{ $this->uiClass('button') }}" @click="open = !open" title="Show or hide columns">
+            <div x-data="crewGridPopover('right')" @click.outside="close()" @scroll.window="reposition()" @resize.window="reposition()" class="crewgrid-th-filter">
+                <button type="button" class="{{ $this->uiClass('button') }}" x-ref="trigger" @click="toggle()" title="Show or hide columns">
                     {!! $this->icon('columns') !!} Columns
                     @php $hiddenCount = count($pickerColumns) - count($columns); @endphp
                     @if($hiddenCount > 0)
                         <span class="{{ $this->uiClass('badge') }}">{{ $hiddenCount }}</span>
                     @endif
                 </button>
-                <div x-show="open" x-cloak class="crewgrid-popover crewgrid-popover-right">
+                <div x-ref="panel" x-show="open" x-cloak :class="placed ? 'crewgrid-placed' : ''" class="crewgrid-popover crewgrid-popover-right">
                     @foreach($pickerColumns as $pickerColumn)
                         <label class="flex items-center gap-2 whitespace-nowrap py-0.5 text-sm text-gray-700" wire:key="crewgrid-pick-{{ $pickerColumn->key() }}">
                             <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" wire:click="toggleColumn('{{ $pickerColumn->key() }}')" @checked(!$this->isColumnHidden($pickerColumn->key()))>
@@ -91,11 +91,11 @@
                                     $filterActive = $this->hasActiveFilter($column);
                                     $filterOptions = $column->filterType === 'multiselect' ? $column->resolveFilterOptions() : [];
                                 @endphp
-                                <div x-data="{ open: false, q: '' }" @click.outside="open = false" class="crewgrid-th-filter">
-                                    <a href="#" @click.prevent="open = !open" title="Filter" class="{{ $filterActive ? 'text-indigo-600' : 'text-gray-400' }}">
+                                <div x-data="crewGridPopover()" @click.outside="close()" @scroll.window="reposition()" @resize.window="reposition()" class="crewgrid-th-filter">
+                                    <a href="#" x-ref="trigger" @click.prevent="toggle()" title="Filter" class="{{ $filterActive ? 'text-indigo-600' : 'text-gray-400' }}">
                                         {!! $this->icon('filter') !!}
                                     </a>
-                                    <div x-show="open" x-cloak class="crewgrid-popover">
+                                    <div x-ref="panel" x-show="open" x-cloak :class="placed ? 'crewgrid-placed' : ''" class="crewgrid-popover">
                                         @if($column->filterType === 'text')
                                             <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Filter {{ $column->label }} ..." wire:model.live.debounce.400ms="filters.{{ $column->key() }}" x-ref="input" x-effect="if (open) $nextTick(() => $refs.input.focus())">
                                         @elseif($column->filterType === 'multiselect')

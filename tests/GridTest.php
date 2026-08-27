@@ -19,6 +19,16 @@ class GridTest extends TestCase
             ->assertSee('$250.00');
     }
 
+    public function test_filter_menus_are_viewport_positioned_so_nothing_clips_them(): void
+    {
+        Livewire::test(OrdersGrid::class)
+            ->assertSeeHtml('x-data="crewGridPopover()"')
+            ->assertSeeHtml('x-data="crewGridPopover(\'right\')"')
+            ->assertSeeHtml('x-ref="trigger"')
+            ->assertSeeHtml('x-ref="panel"')
+            ->assertSeeHtml('crewgrid-placed');
+    }
+
     public function test_number_filters_compare_with_the_chosen_operator(): void
     {
         Livewire::test(OrdersGrid::class)

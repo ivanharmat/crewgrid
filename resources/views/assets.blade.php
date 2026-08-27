@@ -41,13 +41,20 @@
         margin-left: 4px;
     }
 
+    /* Fixed, not absolute: the grid sits inside a horizontally scrolling
+       wrapper, and a table with two rows is shorter than the menu - either
+       one would clip it. Positioned against the trigger by crewGridPopover()
+       on open, which also flips it above when the viewport has no room
+       below. Hidden until placed so it never flashes at the corner. */
     .crewgrid-popover {
-        position: absolute;
-        top: 100%;
-        left: -8px;
-        z-index: 1000;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1050;
+        visibility: hidden;
         min-width: 230px;
-        margin-top: 4px;
+        max-height: calc(100vh - 16px);
+        overflow-y: auto;
         padding: 10px;
         background: #fff;
         border: 1px solid #ccc;
@@ -57,9 +64,7 @@
         text-align: left;
         white-space: normal;
     }
-    /* Toolbar popovers sit at the right edge - opening leftwards keeps them
-       on screen instead of pushing the page sideways. */
-    .crewgrid-popover-right { left: auto; right: 0; }
+    .crewgrid-popover.crewgrid-placed { visibility: visible; }
 
     .crewgrid-popover .crewgrid-options { max-height: 240px; overflow-y: auto; }
     .crewgrid-popover-footer { border-top: 1px solid #eee; margin-top: 8px; padding-top: 6px; }
@@ -138,6 +143,65 @@
        tracks the pointer, then the whole map is sent once on release. The
        server re-renders the colgroup from it, so a width survives sorting,
        filtering, paging and columns being hidden. */
+    /* Column picker and per-column filter menus. The panel is fixed to the
+       viewport and placed against its trigger, so no ancestor's overflow can
+       cut it off; it flips above the trigger when there is no room below and
+       is clamped inside the viewport on both axes. */
+    window.crewGridPopover = function (align) {
+        return {
+            open: false,
+            placed: false,
+            q: '',
+
+            toggle() {
+                this.open = !this.open;
+                if (!this.open) {
+                    this.placed = false;
+
+                    return;
+                }
+                this.$nextTick(() => this.place());
+            },
+
+            close() {
+                this.open = false;
+                this.placed = false;
+            },
+
+            reposition() {
+                if (this.open) {
+                    this.place();
+                }
+            },
+
+            place() {
+                var panel = this.$refs.panel;
+                var trigger = this.$refs.trigger;
+                if (!panel || !trigger) {
+                    return;
+                }
+                var rect = trigger.getBoundingClientRect();
+                var margin = 4;
+                var edge = 8;
+                var height = panel.offsetHeight;
+                var width = panel.offsetWidth;
+
+                var top = rect.bottom + margin;
+                if (top + height > window.innerHeight - edge && rect.top - margin - height > edge) {
+                    top = rect.top - margin - height;
+                }
+                top = Math.max(edge, Math.min(top, window.innerHeight - height - edge));
+
+                var left = align === 'right' ? rect.right - width : rect.left - edge;
+                left = Math.max(edge, Math.min(left, window.innerWidth - width - edge));
+
+                panel.style.top = top + 'px';
+                panel.style.left = left + 'px';
+                this.placed = true;
+            },
+        };
+    };
+
     window.crewGridResize = function (minWidth) {
         return {
             dragKey: null,
