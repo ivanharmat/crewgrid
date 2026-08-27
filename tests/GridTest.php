@@ -19,6 +19,21 @@ class GridTest extends TestCase
             ->assertSee('$250.00');
     }
 
+    public function test_date_filters_offer_quick_presets_that_set_both_bounds(): void
+    {
+        $grid = new OrdersGrid;
+        $presets = $grid->dateRangePresets();
+
+        $this->assertSame(['Today', 'Yesterday', 'This Week', 'Last 7 Days', 'This Month', 'Last 30 Days'], array_keys($presets));
+        $this->assertSame(date('Y-m-d'), $presets['Today']['from']);
+        $this->assertSame($presets['Today']['from'], $presets['Today']['to']);
+        $this->assertSame(date('Y-m-d', strtotime('-6 days')), $presets['Last 7 Days']['from']);
+
+        Livewire::test(OrdersGrid::class)
+            ->assertSeeHtml('crewgrid-date-presets')
+            ->assertSee('Last 30 Days');
+    }
+
     public function test_group_bands_form_by_key_preserving_first_appearance(): void
     {
         $grid = new GroupedOrdersGrid;

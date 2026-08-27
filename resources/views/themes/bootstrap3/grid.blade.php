@@ -119,6 +119,7 @@
                                         @elseif($column->filterType === 'date_range')
                                             <input type="date" class="{{ $this->uiClass('input') }}" wire:model.live="filters.{{ $column->key() }}.from" title="From" style="margin-bottom: 4px;">
                                             <input type="date" class="{{ $this->uiClass('input') }}" wire:model.live="filters.{{ $column->key() }}.to" title="To">
+                                            @include('crewgrid::date-presets')
                                         @endif
                                         @if($filterActive)
                                             <div class="crewgrid-popover-footer">

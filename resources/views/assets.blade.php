@@ -96,6 +96,10 @@
     .crewgrid-group-row > td:hover { background: #e4e8ec; }
     .crewgrid-group-count { opacity: .55; font-weight: 400; }
     .crewgrid-group-chevron { float: right; opacity: .6; }
+
+    /* Quick ranges inside a date filter popover */
+    .crewgrid-date-presets { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+    .crewgrid-date-presets a { font-size: 12px; white-space: nowrap; text-decoration: none; }
     .crewgrid-group-toolbar > td {
         text-align: right;
         background: #f6f7f9;

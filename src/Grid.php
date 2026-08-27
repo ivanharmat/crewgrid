@@ -569,6 +569,27 @@ abstract class Grid extends Component
         return true;
     }
 
+    /**
+     * Quick ranges offered inside every date filter popover, label =>
+     * ['from' => Y-m-d, 'to' => Y-m-d]. Override for a different set; return
+     * [] to hide the presets on a grid.
+     *
+     * @return array<string, array{from: string, to: string}>
+     */
+    public function dateRangePresets(): array
+    {
+        $today = date('Y-m-d');
+
+        return [
+            'Today' => ['from' => $today, 'to' => $today],
+            'Yesterday' => ['from' => date('Y-m-d', strtotime('-1 day')), 'to' => date('Y-m-d', strtotime('-1 day'))],
+            'This Week' => ['from' => date('Y-m-d', strtotime('monday this week')), 'to' => $today],
+            'Last 7 Days' => ['from' => date('Y-m-d', strtotime('-6 days')), 'to' => $today],
+            'This Month' => ['from' => date('Y-m-01'), 'to' => $today],
+            'Last 30 Days' => ['from' => date('Y-m-d', strtotime('-29 days')), 'to' => $today],
+        ];
+    }
+
     public function isGrouped(): bool
     {
         return $this->groupBy() !== null;
