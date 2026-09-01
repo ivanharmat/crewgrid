@@ -9,6 +9,14 @@
 
     .crewgrid-table { margin-bottom: 0; width: 100%; }
 
+    /* The left half of the toolbar: the quick search and whatever the grid's
+       toolbarView() adds sit on one line together. A framework's form control
+       is a full-width block, which would stack them, so the input keeps the
+       leftover room and anything else sizes to its content. */
+    .crewgrid-toolbar-start { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .crewgrid-toolbar-start > input { flex: 1 1 160px; min-width: 120px; }
+    .crewgrid-toolbar-start > select, .crewgrid-toolbar-start select { width: auto; }
+
     /* The grid owns its horizontal scrolling. Bootstrap's .table-responsive
        only scrolls on phone widths, so on a desktop a table wider than its
        box would spill out of it instead. Cells stay on one line, which means

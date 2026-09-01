@@ -702,6 +702,26 @@ abstract class Grid extends Component
     }
 
     /**
+     * A view rendered into the grid's toolbar, beside the quick search and
+     * before the Excel / Columns buttons - for a control that scopes the
+     * whole grid rather than one column, which no column filter can express:
+     * an office picker, a date scope, active / archived / deleted.
+     *
+     *     protected function toolbarView(): ?string
+     *     {
+     *         return 'estimates.partials.estimate-type';
+     *     }
+     *
+     * The view renders inside the component, so it binds a public property
+     * with wire:model.live and reads $this like any other part of the grid.
+     * Null (the default) leaves the toolbar as it is.
+     */
+    protected function toolbarView(): ?string
+    {
+        return null;
+    }
+
+    /**
      * Download the current result set - filters, quick search and sort
      * applied, every page, following what the Kendo grids' Excel button does.
      * Visible columns only, so the column picker shapes the file, minus any
@@ -802,6 +822,7 @@ abstract class Grid extends Component
             'perPageOptions' => (array) config('crewgrid.per_page_options', [15, 30, 50, 100]),
             'perPageSelected' => $this->effectivePerPage(),
             'minColumnWidth' => (int) config('crewgrid.min_column_width', 60),
+            'toolbarView' => $this->toolbarView(),
         ]);
     }
 }

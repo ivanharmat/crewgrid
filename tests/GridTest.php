@@ -8,6 +8,7 @@ use CrewGrid\Tests\Fixtures\GroupedOrdersGrid;
 use CrewGrid\Tests\Fixtures\Order;
 use CrewGrid\Tests\Fixtures\OrdersGrid;
 use CrewGrid\Tests\Fixtures\SearchCallbackOrdersGrid;
+use CrewGrid\Tests\Fixtures\ToolbarOrdersGrid;
 use InvalidArgumentException;
 use Livewire\Livewire;
 
@@ -207,6 +208,27 @@ class GridTest extends TestCase
             ->assertDontSee('ORD-002');
     }
 
+    public function test_a_grid_can_put_its_own_control_in_the_toolbar(): void
+    {
+        $component = Livewire::test(ToolbarOrdersGrid::class);
+
+        // the control renders inside the component, so it binds a property
+        $component->assertSeeHtml('wire:model.live="scope"');
+
+        // and that property scopes the query the grid runs
+        $this->assertCount(2, $component->viewData('rows')->items());
+        $component->set('scope', 'all');
+        $this->assertCount(4, $component->viewData('rows')->items());
+
+        // the toolbar's left half widens to hold it
+        $component->assertSeeHtml('class="col-sm-6 crewgrid-toolbar-start"');
+
+        // a grid without one is untouched
+        Livewire::test(OrdersGrid::class)
+            ->assertSeeHtml('class="col-sm-4 crewgrid-toolbar-start"')
+            ->assertDontSeeHtml('wire:model.live="scope"');
+    }
+
     public function test_text_multiselect_and_date_range_filters_apply(): void
     {
         $component = Livewire::test(OrdersGrid::class)->set('filters.reference', '00');
@@ -322,7 +344,7 @@ class GridTest extends TestCase
 
     public function test_row_class_lands_on_the_tr(): void
     {
-        $grid = new class extends \CrewGrid\Tests\Fixtures\OrdersGrid
+        $grid = new class extends OrdersGrid
         {
             public function rowClass($row): string
             {

@@ -1,12 +1,15 @@
 <div x-data="crewGridResize({{ $minColumnWidth }})" @pointermove.window="move($event)" @pointerup.window="stop()">
     @include('crewgrid::themes.bootstrap5.assets')
     <div class="row mb-2">
-        <div class="col-sm-4">
+        <div class="{{ $toolbarView ? 'col-sm-6' : 'col-sm-4' }} crewgrid-toolbar-start">
             @if(collect($columns)->contains(fn ($c) => $c->searchable))
                 <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Search ..." wire:model.live.debounce.400ms="search">
             @endif
+            @isset($toolbarView)
+                @include($toolbarView)
+            @endisset
         </div>
-        <div class="col-sm-8 text-end">
+        <div class="{{ $toolbarView ? 'col-sm-6' : 'col-sm-8' }} text-end">
             <span wire:loading.delay class="text-muted small me-2">Loading {!! $this->icon('loading') !!}</span>
             @if($this->isExportable())
                 <button type="button" class="{{ $this->uiClass('button') }}" wire:click="export" wire:loading.attr="disabled" title="Export the current view to Excel - all pages, filters applied">{!! $this->icon('export') !!} Excel</button>

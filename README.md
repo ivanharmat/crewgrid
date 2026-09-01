@@ -143,6 +143,34 @@ public function rowClass($row): string
 }
 ```
 
+## Toolbar controls
+
+Some filters belong to the whole grid rather than to one column — an office
+picker, a date scope, active / archived / deleted. Point `toolbarView()` at a
+view and it renders in the toolbar, beside the quick search:
+
+```php
+public string $estimateType = '0';
+
+protected function toolbarView(): ?string
+{
+    return 'estimates.partials.estimate-type';
+}
+```
+
+```blade
+<select class="form-control input-sm" wire:model.live="estimateType">
+    <option value="0">Only Active</option>
+    <option value="0,1">Active And Archived</option>
+    <option value="any">Any Estimate</option>
+</select>
+```
+
+The view renders inside the component, so it binds public properties with
+`wire:model.live` and reads `$this` like the rest of the grid. Scope the query
+on that property in `query()` and the whole grid — paging, sorting, the Excel
+export — follows it.
+
 ## Pager position
 
 The pager row renders below the table by default; put it above, or at both ends for long pages:

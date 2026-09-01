@@ -5,6 +5,9 @@
             @if(collect($columns)->contains(fn ($c) => $c->searchable))
                 <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Search ..." wire:model.live.debounce.400ms="search">
             @endif
+            @isset($toolbarView)
+                @include($toolbarView)
+            @endisset
         </div>
         <div class="ml-auto flex items-center gap-2">
             <span wire:loading.delay class="text-sm text-gray-500">Loading {!! $this->icon('loading') !!}</span>
