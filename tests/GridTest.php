@@ -48,6 +48,35 @@ class GridTest extends TestCase
         vertical-align: bottom;', $html, 'Headers are not truncated.');
     }
 
+    public function test_dragged_widths_clip_instead_of_spilling_over_the_next_column(): void
+    {
+        // an unsized grid lays out to content: nothing is cut off
+        $html = Livewire::test(OrdersGrid::class)->html();
+        $this->assertStringNotContainsString('crewgrid-fixed', $this->tableTag($html));
+
+        // once a width is stored the table is fixed-layout, where a cell or a
+        // header narrower than its text must be clipped, not spill sideways
+        $this->assertStringContainsString('.crewgrid-table.crewgrid-fixed > tbody > tr > td {', $html);
+        $this->assertStringContainsString('.crewgrid-table.crewgrid-fixed .crewgrid-th-label {', $html);
+
+        $sized = Livewire::test(OrdersGrid::class)->call('setColumnWidths', ['total' => 90]);
+        $this->assertStringContainsString('crewgrid-fixed', $this->tableTag($sized->html()), 'A stored width puts the table in fixed layout.');
+
+        $sized->call('resetColumnWidths');
+        $this->assertStringNotContainsString('crewgrid-fixed', $this->tableTag($sized->html()), 'Reset Widths goes back to content-sized columns.');
+    }
+
+    /**
+     * The grid's <table> tag on its own - the shipped stylesheet mentions
+     * every class name, so the whole page cannot answer "is it fixed?".
+     */
+    private function tableTag(string $html): string
+    {
+        preg_match('/<table[^>]*>/', $html, $match);
+
+        return $match[0] ?? '';
+    }
+
     public function test_a_column_can_opt_back_into_wrapping(): void
     {
         $plain = Column::make('Note', 'note');

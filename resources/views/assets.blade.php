@@ -92,6 +92,22 @@
         text-overflow: ellipsis;
     }
 
+    /* Dragging a column width switches the table to a fixed layout, where a
+       column no longer grows to fit its contents. A cell narrower than its
+       text is cut off with an ellipsis rather than spilling across its
+       neighbour - widen the column again, or Reset Widths, to read it whole.
+       Only in that state: an unsized grid still shows everything in full. */
+    .crewgrid-table.crewgrid-fixed > tbody > tr > td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .crewgrid-table.crewgrid-fixed > tbody > tr > td.crewgrid-wrap { overflow: visible; }
+    .crewgrid-table.crewgrid-fixed .crewgrid-th-label {
+        max-width: calc(100% - 20px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     .crewgrid-bordered > thead > tr > th,
     .crewgrid-bordered > tbody > tr > td { border-right: 1px solid #e3e6e9; }
     .crewgrid-bordered > thead > tr > th:last-child,
