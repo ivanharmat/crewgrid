@@ -23,6 +23,8 @@ class Column
 
     public bool $searchable = false;
 
+    public ?Closure $searchCallback = null;
+
     /** @var 'text'|'multiselect'|'date_range'|null */
     public ?string $filterType = null;
 
@@ -80,9 +82,21 @@ class Column
     /**
      * Include this column in the grid-wide quick search.
      */
-    public function searchable(): static
+    /**
+     * Include this column in the quick search. Without a callback the search
+     * matches the column's field, which is ambiguous the moment the query
+     * joins another table carrying the same column name - pass a callback
+     * then, as the sort and the filters take one:
+     *
+     *     ->searchable(fn ($query, $search) => $query->orWhere('estimates.name', 'like', '%'.$search.'%'))
+     *
+     * The callback is called inside the search group, so it must use
+     * orWhere() to sit alongside the other searchable columns.
+     */
+    public function searchable(?Closure $callback = null): static
     {
         $this->searchable = true;
+        $this->searchCallback = $callback;
 
         return $this;
     }

@@ -241,6 +241,11 @@ abstract class Grid extends Component
             if ($searchable->isNotEmpty()) {
                 $query->where(function ($outer) use ($searchable, $search) {
                     foreach ($searchable as $column) {
+                        if (! is_null($column->searchCallback)) {
+                            call_user_func($column->searchCallback, $outer, $search);
+
+                            continue;
+                        }
                         $outer->orWhere($column->field, 'like', '%'.$search.'%');
                     }
                 });

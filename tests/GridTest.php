@@ -7,6 +7,7 @@ use CrewGrid\Grid;
 use CrewGrid\Tests\Fixtures\GroupedOrdersGrid;
 use CrewGrid\Tests\Fixtures\Order;
 use CrewGrid\Tests\Fixtures\OrdersGrid;
+use CrewGrid\Tests\Fixtures\SearchCallbackOrdersGrid;
 use InvalidArgumentException;
 use Livewire\Livewire;
 
@@ -161,6 +162,23 @@ class GridTest extends TestCase
 
         $component->set('search', 'ORD-004');
         $this->assertSame(['Cedar & Sons'], collect($component->viewData('rows')->items())->pluck('customer')->all());
+    }
+
+    public function test_a_searchable_column_can_narrow_the_search_itself(): void
+    {
+        // the default matches anywhere in the field
+        Livewire::test(OrdersGrid::class)
+            ->set('search', '002')
+            ->assertSee('ORD-002')->assertDontSee('ORD-001');
+
+        // the callback here matches the start of the reference instead
+        Livewire::test(SearchCallbackOrdersGrid::class)
+            ->set('search', 'ORD-002')
+            ->assertSee('ORD-002')->assertDontSee('ORD-001');
+
+        Livewire::test(SearchCallbackOrdersGrid::class)
+            ->set('search', '002')
+            ->assertDontSee('ORD-002');
     }
 
     public function test_text_multiselect_and_date_range_filters_apply(): void
