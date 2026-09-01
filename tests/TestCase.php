@@ -48,6 +48,11 @@ abstract class TestCase extends Orchestra
     {
         $app['view']->addLocation(__DIR__.'/Fixtures/views');
 
+        // Each test drives one grid state at a time; remembering would carry
+        // a filter from one Livewire::test() into the next one in the same
+        // method. The tests that are about remembering turn it back on.
+        $app['config']->set('crewgrid.remember_view', false);
+
         $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [

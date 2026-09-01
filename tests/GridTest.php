@@ -4,6 +4,7 @@ namespace CrewGrid\Tests;
 
 use CrewGrid\Columns\Column;
 use CrewGrid\Grid;
+use CrewGrid\Tests\Fixtures\ForgetfulOrdersGrid;
 use CrewGrid\Tests\Fixtures\GroupedOrdersGrid;
 use CrewGrid\Tests\Fixtures\Order;
 use CrewGrid\Tests\Fixtures\OrdersGrid;
@@ -206,6 +207,83 @@ class GridTest extends TestCase
         Livewire::test(SearchCallbackOrdersGrid::class)
             ->set('search', '002')
             ->assertDontSee('ORD-002');
+    }
+
+    public function test_a_grid_comes_back_to_the_view_its_user_left(): void
+    {
+        config()->set('crewgrid.remember_view', true);
+
+        Livewire::test(OrdersGrid::class)
+            ->call('sortBy', 'total')
+            ->set('filters.customer', ['Acme' => true])
+            ->call('setPerPage', 50);
+
+        // a fresh visit, nothing in the URL: the same view is back
+        $returning = Livewire::test(OrdersGrid::class)
+            ->assertSet('sortField', 'total')
+            ->assertSet('sortDirection', 'asc')
+            ->assertSet('filters', ['customer' => ['Acme' => true]])
+            ->assertSet('perPage', 50);
+
+        $this->assertCount(2, $returning->viewData('rows')->items());
+
+        // and clearing them is remembered too, rather than coming back next time
+        $returning->call('clearFilters');
+        Livewire::test(OrdersGrid::class)->assertSet('filters', []);
+    }
+
+    public function test_the_url_beats_the_remembered_view_and_replaces_it(): void
+    {
+        config()->set('crewgrid.remember_view', true);
+
+        Livewire::test(OrdersGrid::class)->call('sortBy', 'total');
+
+        // a link someone was sent shows what it says ...
+        Livewire::withQueryParams(['sort' => 'customer', 'dir' => 'desc'])
+            ->test(OrdersGrid::class)
+            ->assertSet('sortField', 'customer')
+            ->assertSet('sortDirection', 'desc');
+
+        // ... and is where they pick up from
+        Livewire::test(OrdersGrid::class)->assertSet('sortField', 'customer');
+    }
+
+    public function test_the_remembered_view_holds_the_sort_and_the_filters_and_nothing_else(): void
+    {
+        config()->set('crewgrid.remember_view', true);
+
+        $grid = Livewire::test(OrdersGrid::class)->call('sortBy', 'total')->set('paginators.page', 2);
+
+        $stored = session('crewgrid.'.$grid->instance()->getName());
+
+        $this->assertSame(
+            ['sortField', 'sortDirection', 'filters', 'search', 'perPage'],
+            array_keys($stored['view'])
+        );
+        // the page number is left out on purpose - coming back on page 2 of a
+        // list is disorienting in a way that its filters are not
+        $this->assertArrayNotHasKey('page', $stored['view']);
+        $this->assertSame('total', $stored['view']['sortField']);
+
+        // and it sits beside the widths and hidden columns, not instead of them
+        $this->assertArrayHasKey('widths', $stored);
+        $this->assertArrayHasKey('hidden', $stored);
+    }
+
+    public function test_a_grid_can_decline_to_remember_anything(): void
+    {
+        config()->set('crewgrid.remember_view', true);
+
+        Livewire::test(ForgetfulOrdersGrid::class)->call('sortBy', 'total');
+
+        Livewire::test(ForgetfulOrdersGrid::class)->assertSet('sortField', '');
+    }
+
+    public function test_grids_remember_on_by_default(): void
+    {
+        $shipped = require __DIR__.'/../config/crewgrid.php';
+
+        $this->assertTrue($shipped['remember_view']);
     }
 
     public function test_a_grid_can_put_its_own_control_in_the_toolbar(): void

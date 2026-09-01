@@ -41,6 +41,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Remembered view
+    |--------------------------------------------------------------------------
+    |
+    | Whether a grid comes back to the sort, filters, quick search and page
+    | size its user left it on. Stored with the column widths and the hidden
+    | columns, so wherever Grid::loadPreferences() reads decides how long it
+    | lasts - the session by default. A value named in the URL still wins,
+    | and becomes what is remembered. Any grid can override via its
+    | $rememberView property. The page number is never remembered.
+    |
+    */
+
+    'remember_view' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | Appearance
     |--------------------------------------------------------------------------
     |

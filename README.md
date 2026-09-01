@@ -121,7 +121,7 @@ Column borders and row lines are on by default; turn them off app-wide with `'bo
 
 **Show/hide.** The **Columns** button in the toolbar lists every column with a checkbox, badges how many are hidden, and offers *Show All*. The last visible column can't be hidden. Filters and quick search always run over the full column set — hiding a column changes the view, not the result set — so a filter left on a hidden column keeps applying and is flagged with a funnel in the picker rather than silently shrinking the results.
 
-**Where preferences live.** Both are server-side, kept in the session under `preferenceKey()`, so they survive a reload with no flash of unstyled columns and the `<colgroup>` can be rendered correctly on the server. They deliberately stay out of the query string: sorting and filtering describe *what* you are looking at and are worth sharing, while widths and hidden columns are personal viewing preferences that would only make shared links noisy. Override `loadPreferences()` / `savePreferences()` to store them per user instead and they will outlive the session:
+**Where preferences live.** These are server-side, kept in the session under `preferenceKey()`, so they survive a reload with no flash of unstyled columns and the `<colgroup>` can be rendered correctly on the server. Widths and hidden columns deliberately stay out of the query string: sorting and filtering describe *what* you are looking at and are worth sharing, while those two are personal viewing preferences that would only make shared links noisy. Override `loadPreferences()` / `savePreferences()` to store them per user instead and they will outlive the session:
 
 ```php
 protected function loadPreferences(): array
@@ -131,6 +131,31 @@ protected function loadPreferences(): array
 ```
 
 No build step and nothing to add to your layout — the small stylesheet and resize script are emitted inline once per page.
+
+## Remembered view
+
+A grid comes back to the sort, filters, quick search and page size its user left it on, stored alongside the widths and hidden columns — so the same `loadPreferences()` override decides how long that lasts.
+
+```php
+'remember_view' => true,              // config: on for every grid
+public ?bool $rememberView = false;   // or off for one
+```
+
+A value named in the URL wins over the stored one **and replaces it**, so a link someone was sent shows what it says and is where they pick up from, while a bare address returns to whatever they last had on screen. The page number is never remembered — coming back on page 47 of a list is disorienting in a way that coming back to the filters that produced it is not.
+
+A grid with a `mount()` of its own must call `parent::mount()`, which is what restores the view; defaults it sets afterwards only apply when there was nothing to restore:
+
+```php
+public function mount(): void
+{
+    parent::mount();
+
+    if ($this->sortField === '') {
+        $this->sortField = 'last_updated';
+        $this->sortDirection = 'desc';
+    }
+}
+```
 
 ## Row classes
 

@@ -165,6 +165,12 @@ abstract class Grid extends Component
     /** Column borders and row lines. Null falls back to config. */
     public ?bool $bordered = null;
 
+    /**
+     * Whether the grid remembers its sort, filters, quick search and page
+     * size between visits. Null falls back to config.
+     */
+    public ?bool $rememberView = null;
+
     /** Rows currently shown in infinite mode. */
     public int $infiniteLoaded = 0;
 
@@ -173,7 +179,7 @@ abstract class Grid extends Component
      * property: this is server state, and Livewire would round-trip it
      * through the client on every request for nothing.
      *
-     * @var array{widths: array<string, int>, hidden: array<int, string>}|null
+     * @var array{widths: array<string, int>, hidden: array<int, string>, view: array<string, mixed>}|null
      */
     private ?array $gridPreferences = null;
 
@@ -181,6 +187,80 @@ abstract class Grid extends Component
 
     /** @return array<int, Column> */
     abstract protected function columns(): array;
+
+    /**
+     * What a grid remembers between visits, property => the query string name
+     * the same value travels under. The page number is deliberately absent:
+     * coming back on page 47 of a list is disorienting in a way that coming
+     * back to the filters that produced it is not.
+     */
+    private const REMEMBERED = [
+        'sortField' => 'sort',
+        'sortDirection' => 'dir',
+        'filters' => 'f',
+        'search' => 'q',
+        'perPage' => 'perPage',
+    ];
+
+    /**
+     * Restores the view the user left behind, and must be called by any grid
+     * that defines a mount() of its own:
+     *
+     *     public function mount(): void
+     *     {
+     *         parent::mount();
+     *         ...
+     *     }
+     *
+     * A value named in the URL wins over the stored one and replaces it, so a
+     * link someone was sent shows what it says and picks up from there, while
+     * a bare address returns to whatever that user last had on screen. A grid
+     * setting its own defaults in mount() does so after this, and only sees
+     * the untouched property when there was nothing to restore.
+     */
+    public function mount(): void
+    {
+        if (! $this->remembersView()) {
+            return;
+        }
+
+        $stored = $this->preferences()['view'];
+        $named = request()->query();
+
+        foreach (self::REMEMBERED as $property => $parameter) {
+            if (array_key_exists($parameter, $named) || ! array_key_exists($property, $stored)) {
+                continue;
+            }
+            $this->{$property} = $stored[$property];
+        }
+    }
+
+    public function remembersView(): bool
+    {
+        return $this->rememberView ?? (bool) config('crewgrid.remember_view', true);
+    }
+
+    /**
+     * Stores the view as it now stands. Called from render(), so it records
+     * whatever the request settled on however it got there - a sort click, a
+     * filter, a shared link, a default a grid applies in its own mount() -
+     * without every one of those having to remember to save.
+     */
+    private function rememberCurrentView(): void
+    {
+        if (! $this->remembersView()) {
+            return;
+        }
+
+        $view = [];
+        foreach (array_keys(self::REMEMBERED) as $property) {
+            $view[$property] = $this->{$property};
+        }
+
+        if ($view !== $this->preferences()['view']) {
+            $this->writePreferences(['view' => $view]);
+        }
+    }
 
     public function updatedSearch(): void
     {
@@ -457,7 +537,7 @@ abstract class Grid extends Component
     }
 
     /**
-     * @return array{widths: array<string, int>, hidden: array<int, string>}
+     * @return array{widths: array<string, int>, hidden: array<int, string>, view: array<string, mixed>}
      */
     protected function preferences(): array
     {
@@ -466,6 +546,7 @@ abstract class Grid extends Component
             $this->gridPreferences = [
                 'widths' => is_array($stored['widths'] ?? null) ? $stored['widths'] : [],
                 'hidden' => is_array($stored['hidden'] ?? null) ? array_values($stored['hidden']) : [],
+                'view' => is_array($stored['view'] ?? null) ? $stored['view'] : [],
             ];
         }
 
@@ -473,7 +554,7 @@ abstract class Grid extends Component
     }
 
     /**
-     * @param  array{widths?: array<string, int>, hidden?: array<int, string>}  $changes
+     * @param  array{widths?: array<string, int>, hidden?: array<int, string>, view?: array<string, mixed>}  $changes
      */
     protected function writePreferences(array $changes): void
     {
@@ -796,6 +877,8 @@ abstract class Grid extends Component
 
     public function render()
     {
+        $this->rememberCurrentView();
+
         $per_page = $this->effectivePerPage();
 
         if ($this->loadMode === 'infinite') {
