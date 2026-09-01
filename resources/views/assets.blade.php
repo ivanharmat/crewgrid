@@ -7,7 +7,13 @@
 <style>
     [x-cloak] { display: none !important; }
 
-    .crewgrid-table { margin-bottom: 0; }
+    .crewgrid-table { margin-bottom: 0; width: 100%; }
+
+    /* The grid owns its horizontal scrolling. Bootstrap's .table-responsive
+       only scrolls on phone widths, so on a desktop a table wider than its
+       box would spill out of it instead. Cells stay on one line, which means
+       a wide table is normal and has to scroll rather than squeeze. */
+    .crewgrid-scroll { overflow-x: auto; }
 
     /* Widths only bite under a fixed layout; width:auto + min-width lets a
        widened column push the table past the container so it scrolls instead
@@ -27,11 +33,11 @@
         white-space: nowrap;
     }
 
+    /* Headers are never shortened: a column whose name reads "Divis..." has
+       lost the one thing it has to tell you. It sets the column's floor
+       width instead, and the table scrolls if that makes it wide. */
     .crewgrid-th-label {
         display: inline-block;
-        max-width: calc(100% - 20px);
-        overflow: hidden;
-        text-overflow: ellipsis;
         vertical-align: bottom;
     }
 
@@ -69,8 +75,17 @@
     .crewgrid-popover .crewgrid-options { max-height: 240px; overflow-y: auto; }
     .crewgrid-popover-footer { border-top: 1px solid #eee; margin-top: 8px; padding-top: 6px; }
 
-    /* Cells wrap by default: narrowing a column must never hide content. */
-    .crewgrid-table > tbody > tr > td { word-break: break-word; }
+    /* One line per cell, so rows stay the same height and a column can be
+       read down at a glance; the table scrolls sideways when that makes it
+       wider than its box. Column::wrap() opts a column out for free text,
+       and Column::nowrap() keeps the old clip-with-ellipsis behaviour for a
+       column that must not widen. */
+    .crewgrid-table > tbody > tr > td { white-space: nowrap; }
+    .crewgrid-table > tbody > tr > td.crewgrid-wrap {
+        white-space: normal;
+        word-break: break-word;
+        min-width: 160px;
+    }
     .crewgrid-table > tbody > tr > td.crewgrid-nowrap {
         white-space: nowrap;
         overflow: hidden;

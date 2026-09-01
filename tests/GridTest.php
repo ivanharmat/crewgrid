@@ -2,6 +2,7 @@
 
 namespace CrewGrid\Tests;
 
+use CrewGrid\Columns\Column;
 use CrewGrid\Grid;
 use CrewGrid\Tests\Fixtures\GroupedOrdersGrid;
 use CrewGrid\Tests\Fixtures\Order;
@@ -31,6 +32,29 @@ class GridTest extends TestCase
             // an inline style and drop the panel into the page corner
             ->assertSeeHtml('pos.top')
             ->assertSeeHtml('pos.left');
+    }
+
+    public function test_the_table_fills_its_box_scrolls_sideways_and_never_shortens_a_header(): void
+    {
+        $html = Livewire::test(OrdersGrid::class)
+            ->assertSeeHtml('crewgrid-scroll')   // the grid owns its horizontal scrolling
+            ->assertSee('Reference')             // headers render in full
+            ->html();
+
+        $this->assertStringContainsString('.crewgrid-table { margin-bottom: 0; width: 100%; }', $html);
+        $this->assertStringContainsString('.crewgrid-scroll { overflow-x: auto; }', $html);
+        $this->assertStringContainsString('> td { white-space: nowrap; }', $html, 'Cells stay on one line by default.');
+        $this->assertStringNotContainsString('text-overflow: ellipsis;
+        vertical-align: bottom;', $html, 'Headers are not truncated.');
+    }
+
+    public function test_a_column_can_opt_back_into_wrapping(): void
+    {
+        $plain = Column::make('Note', 'note');
+        $this->assertStringNotContainsString('crewgrid-wrap', $plain->cssClass());
+
+        $wrapped = Column::make('Note', 'note')->wrap();
+        $this->assertStringContainsString('crewgrid-wrap', $wrapped->cssClass());
     }
 
     public function test_number_filters_compare_with_the_chosen_operator(): void

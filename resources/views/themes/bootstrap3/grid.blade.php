@@ -55,7 +55,7 @@
     @if($loadMode !== 'infinite' && $this->showsPagerAt('top'))
         @include('crewgrid::themes.bootstrap3.pager')
     @endif
-    <div class="table-responsive" @pointerdown="start($event)">
+    <div class="table-responsive crewgrid-scroll" @pointerdown="start($event)">
         <table class="table table-striped table-hover table-condensed crewgrid-table {{ $this->isBordered() ? 'crewgrid-bordered' : '' }} {{ $this->hasFixedLayout() ? 'crewgrid-fixed' : '' }}">
             {{-- Server-rendered, so widths survive a morph and the column set can
                  change when columns are hidden. --}}

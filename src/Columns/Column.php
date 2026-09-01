@@ -47,6 +47,8 @@ class Column
 
     public bool $nowrap = false;
 
+    public bool $wrap = false;
+
     public bool $resizable = true;
 
     /** Markup rendered before the header label - author markup, not escaped. */
@@ -192,6 +194,18 @@ class Column
         return $this;
     }
 
+    /**
+     * Let this column's cells wrap onto several lines. Cells are kept on one
+     * line by default so rows stay scannable and the table scrolls sideways;
+     * a column of free text (a note, a long description) reads better wrapped.
+     */
+    public function wrap(): static
+    {
+        $this->wrap = true;
+
+        return $this;
+    }
+
     public function notResizable(): static
     {
         $this->resizable = false;
@@ -265,6 +279,9 @@ class Column
         }
         if ($this->nowrap) {
             $classes[] = 'crewgrid-nowrap';
+        }
+        if ($this->wrap) {
+            $classes[] = 'crewgrid-wrap';
         }
 
         return implode(' ', $classes);
