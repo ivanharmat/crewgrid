@@ -157,6 +157,14 @@ public function mount(): void
 }
 ```
 
+A grid that *seeds a starting filter* should ask `viewWasRestored()` first, or a user who clears that filter is handed it back on their next visit:
+
+```php
+if (! $this->viewWasRestored() && empty($this->filters)) {
+    $this->filters['status'] = ['Active' => true];
+}
+```
+
 ## Row classes
 
 Colour or mark whole rows by overriding `rowClass()` on the grid — it returns CSS classes for the `<tr>`, so the page owns its palette:

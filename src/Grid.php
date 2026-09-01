@@ -183,6 +183,9 @@ abstract class Grid extends Component
      */
     private ?array $gridPreferences = null;
 
+    /** Whether mount() found a stored view to pick up from. */
+    private bool $viewRestored = false;
+
     abstract protected function query(): BuilderContract;
 
     /** @return array<int, Column> */
@@ -226,6 +229,7 @@ abstract class Grid extends Component
 
         $stored = $this->preferences()['view'];
         $named = request()->query();
+        $this->viewRestored = $stored !== [];
 
         foreach (self::REMEMBERED as $property => $parameter) {
             if (array_key_exists($parameter, $named) || ! array_key_exists($property, $stored)) {
@@ -238,6 +242,23 @@ abstract class Grid extends Component
     public function remembersView(): bool
     {
         return $this->rememberView ?? (bool) config('crewgrid.remember_view', true);
+    }
+
+    /**
+     * Whether this visit picked up a view the user left behind. A grid that
+     * seeds a starting filter in mount() should ask before doing so, or a
+     * user who clears that filter gets it handed back on their next visit:
+     *
+     *     if (! $this->viewWasRestored() && empty($this->filters)) {
+     *         $this->filters['status'] = ['Active' => true];
+     *     }
+     *
+     * Only meaningful inside mount(), which is the only place the question
+     * arises - later requests never restore anything.
+     */
+    public function viewWasRestored(): bool
+    {
+        return $this->viewRestored;
     }
 
     /**

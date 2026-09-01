@@ -9,6 +9,7 @@ use CrewGrid\Tests\Fixtures\GroupedOrdersGrid;
 use CrewGrid\Tests\Fixtures\Order;
 use CrewGrid\Tests\Fixtures\OrdersGrid;
 use CrewGrid\Tests\Fixtures\SearchCallbackOrdersGrid;
+use CrewGrid\Tests\Fixtures\SeededOrdersGrid;
 use CrewGrid\Tests\Fixtures\ToolbarOrdersGrid;
 use InvalidArgumentException;
 use Livewire\Livewire;
@@ -268,6 +269,22 @@ class GridTest extends TestCase
         // and it sits beside the widths and hidden columns, not instead of them
         $this->assertArrayHasKey('widths', $stored);
         $this->assertArrayHasKey('hidden', $stored);
+    }
+
+    public function test_a_seeded_filter_opens_the_grid_but_clearing_it_sticks(): void
+    {
+        config()->set('crewgrid.remember_view', true);
+
+        // nothing remembered yet, so the grid opens on its own filter
+        $first = Livewire::test(SeededOrdersGrid::class)
+            ->assertSet('filters', ['customer' => ['Acme' => true]]);
+        $this->assertCount(2, $first->viewData('rows')->items());
+
+        $first->call('clearFilters');
+
+        // and the clearing is what comes back, not the seed
+        $returning = Livewire::test(SeededOrdersGrid::class)->assertSet('filters', []);
+        $this->assertCount(4, $returning->viewData('rows')->items());
     }
 
     public function test_a_grid_can_decline_to_remember_anything(): void
