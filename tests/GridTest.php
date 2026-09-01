@@ -164,6 +164,32 @@ class GridTest extends TestCase
         $this->assertSame(['Cedar & Sons'], collect($component->viewData('rows')->items())->pluck('customer')->all());
     }
 
+    public function test_the_rows_per_page_menu_shows_the_number_actually_in_use(): void
+    {
+        // $perPage starts null so the configured default can change under it;
+        // a null-bound select showed its first option (15) while the grid was
+        // paging by the configured 30
+        $component = Livewire::test(OrdersGrid::class)->assertSet('perPage', null);
+        $this->assertSame(30, (int) config('crewgrid.per_page'));
+        $component->assertSeeHtml('<option value="30" selected>');
+        $component->assertDontSeeHtml('<option value="15" selected>');
+
+        $component->call('setPerPage', 15)
+            ->assertSet('perPage', 15)
+            ->assertSeeHtml('<option value="15" selected>');
+
+        // a number outside the offered list is ignored
+        $component->call('setPerPage', 7)->assertSet('perPage', 15);
+    }
+
+    public function test_the_clear_filters_button_is_a_danger_button(): void
+    {
+        $html = Livewire::test(OrdersGrid::class)->set('filters.reference', 'ORD')->html();
+
+        $this->assertStringContainsString('bg-red', $html, 'Clear Filters stands out as destructive.');
+        $this->assertStringContainsString('Clear Filters', $html);
+    }
+
     public function test_a_searchable_column_can_narrow_the_search_itself(): void
     {
         // the default matches anywhere in the field

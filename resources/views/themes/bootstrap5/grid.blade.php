@@ -42,11 +42,11 @@
                 </div>
             </div>
             @if(!empty($filters) || $search !== '')
-                <button type="button" class="{{ $this->uiClass('button') }}" wire:click="clearFilters">{!! $this->icon('clear') !!} Clear Filters</button>
+                <button type="button" class="{{ $this->uiClass('button.danger') }}" wire:click="clearFilters">{!! $this->icon('clear') !!} Clear Filters</button>
             @endif
-            <select class="{{ $this->uiClass('select') }}" wire:model.live="perPage" title="Rows per page">
+            <select class="{{ $this->uiClass('select') }}" wire:change="setPerPage($event.target.value)" title="Rows per page">
                 @foreach($perPageOptions as $option)
-                    <option value="{{ $option }}">{{ $option }}</option>
+                    <option value="{{ $option }}" @selected($option == $perPageSelected)>{{ $option }}</option>
                 @endforeach
             </select>
         </div>

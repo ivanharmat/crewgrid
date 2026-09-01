@@ -39,6 +39,7 @@ abstract class Grid extends Component
     public const DEFAULT_CLASSES = [
         'bootstrap3' => [
             'button' => 'btn btn-default btn-sm',
+            'button.danger' => 'btn bg-red btn-sm',
             'input' => 'form-control input-sm',
             'select' => 'form-control input-sm',
             'link' => '',
@@ -51,6 +52,7 @@ abstract class Grid extends Component
         ],
         'bootstrap5' => [
             'button' => 'btn btn-outline-secondary btn-sm',
+            'button.danger' => 'btn btn-danger btn-sm',
             'input' => 'form-control form-control-sm',
             'select' => 'form-select form-select-sm d-inline-block w-auto',
             'link' => '',
@@ -63,6 +65,7 @@ abstract class Grid extends Component
         ],
         'tailwind' => [
             'button' => 'inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2.5 py-1 text-sm text-gray-700 shadow-sm hover:bg-gray-50',
+            'button.danger' => 'inline-flex items-center gap-1 rounded-md border border-transparent bg-red-600 px-2.5 py-1 text-sm text-white shadow-sm hover:bg-red-700',
             'input' => 'block w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500',
             'select' => 'rounded-md border border-gray-300 py-1 pl-2 pr-7 text-sm shadow-sm',
             'link' => 'text-sm text-indigo-600 hover:underline',
@@ -191,6 +194,23 @@ abstract class Grid extends Component
 
     public function updatedPerPage(): void
     {
+        $this->resetRows();
+    }
+
+    /**
+     * The rows-per-page menu picks through here rather than binding straight
+     * to $perPage: the property starts null so the configured default can
+     * change under it, and a null-bound select shows its first option while
+     * the grid pages by the configured number - the menu said 15 while 30
+     * rows were on screen.
+     */
+    public function setPerPage(int $perPage): void
+    {
+        if (! in_array($perPage, (array) config('crewgrid.per_page_options', [15, 30, 50, 100]), true)) {
+            return;
+        }
+
+        $this->perPage = $perPage;
         $this->resetRows();
     }
 
@@ -780,6 +800,7 @@ abstract class Grid extends Component
             'pickerColumns' => $this->columns(),
             'rows' => $rows,
             'perPageOptions' => (array) config('crewgrid.per_page_options', [15, 30, 50, 100]),
+            'perPageSelected' => $this->effectivePerPage(),
             'minColumnWidth' => (int) config('crewgrid.min_column_width', 60),
         ]);
     }
