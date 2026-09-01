@@ -287,6 +287,21 @@ class GridTest extends TestCase
         $this->assertCount(4, $returning->viewData('rows')->items());
     }
 
+    public function test_a_grid_can_add_its_own_state_to_what_is_remembered(): void
+    {
+        config()->set('crewgrid.remember_view', true);
+
+        Livewire::test(ToolbarOrdersGrid::class)->set('scope', 'all');
+
+        $returning = Livewire::test(ToolbarOrdersGrid::class)->assertSet('scope', 'all');
+        $this->assertCount(4, $returning->viewData('rows')->items());
+
+        // and the URL overrides it the same way it overrides a sort
+        Livewire::withQueryParams(['scope' => 'paid'])
+            ->test(ToolbarOrdersGrid::class)
+            ->assertSet('scope', 'paid');
+    }
+
     public function test_a_grid_can_decline_to_remember_anything(): void
     {
         config()->set('crewgrid.remember_view', true);

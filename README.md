@@ -165,6 +165,18 @@ if (! $this->viewWasRestored() && empty($this->filters)) {
 }
 ```
 
+A grid with state of its own — a scope its [toolbar control](#toolbar-controls) sets, say — adds it by name, paired with the query string parameter it travels under. Mark that property `#[Url]` too, which is what puts the value in the address and reads it back:
+
+```php
+#[Url(as: 'show', except: '0')]
+public string $estimateType = '0';
+
+protected function rememberedProperties(): array
+{
+    return parent::rememberedProperties() + ['estimateType' => 'show'];
+}
+```
+
 ## Row classes
 
 Colour or mark whole rows by overriding `rowClass()` on the grid — it returns CSS classes for the `<tr>`, so the page owns its palette:

@@ -192,10 +192,10 @@ abstract class Grid extends Component
     abstract protected function columns(): array;
 
     /**
-     * What a grid remembers between visits, property => the query string name
-     * the same value travels under. The page number is deliberately absent:
-     * coming back on page 47 of a list is disorienting in a way that coming
-     * back to the filters that produced it is not.
+     * What every grid remembers between visits, property => the query string
+     * name the same value travels under. The page number is deliberately
+     * absent: coming back on page 47 of a list is disorienting in a way that
+     * coming back to the filters that produced it is not.
      */
     private const REMEMBERED = [
         'sortField' => 'sort',
@@ -231,12 +231,36 @@ abstract class Grid extends Component
         $named = request()->query();
         $this->viewRestored = $stored !== [];
 
-        foreach (self::REMEMBERED as $property => $parameter) {
+        foreach ($this->rememberedProperties() as $property => $parameter) {
             if (array_key_exists($parameter, $named) || ! array_key_exists($property, $stored)) {
                 continue;
             }
             $this->{$property} = $stored[$property];
         }
+    }
+
+    /**
+     * Add a grid's own state to what is remembered - a scope its toolbarView()
+     * sets, say - as property => the query string name it travels under, so
+     * the URL can override it the same way it overrides a sort:
+     *
+     *     #[Url(as: 'show', except: '0')]
+     *     public string $estimateType = '0';
+     *
+     *     protected function rememberedProperties(): array
+     *     {
+     *         return parent::rememberedProperties() + ['estimateType' => 'show'];
+     *     }
+     *
+     * The #[Url] is what puts the value in the address and reads it back; the
+     * name given here is the one it travels under, so that the stored value
+     * stands aside when a link names its own.
+     *
+     * @return array<string, string>
+     */
+    protected function rememberedProperties(): array
+    {
+        return self::REMEMBERED;
     }
 
     public function remembersView(): bool
@@ -274,7 +298,7 @@ abstract class Grid extends Component
         }
 
         $view = [];
-        foreach (array_keys(self::REMEMBERED) as $property) {
+        foreach (array_keys($this->rememberedProperties()) as $property) {
             $view[$property] = $this->{$property};
         }
 
