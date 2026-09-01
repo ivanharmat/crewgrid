@@ -26,7 +26,11 @@ class GridTest extends TestCase
             ->assertSeeHtml('x-data="crewGridPopover(\'right\')"')
             ->assertSeeHtml('x-ref="trigger"')
             ->assertSeeHtml('x-ref="panel"')
-            ->assertSeeHtml('crewgrid-placed');
+            ->assertSeeHtml('crewgrid-placed')
+            // bound, not written onto the element: a Livewire morph would wipe
+            // an inline style and drop the panel into the page corner
+            ->assertSeeHtml('pos.top')
+            ->assertSeeHtml('pos.left');
     }
 
     public function test_number_filters_compare_with_the_chosen_operator(): void

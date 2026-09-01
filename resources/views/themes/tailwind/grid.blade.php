@@ -22,7 +22,7 @@
                         <span class="{{ $this->uiClass('badge') }}">{{ $hiddenCount }}</span>
                     @endif
                 </button>
-                <div x-ref="panel" x-show="open" x-cloak :class="placed ? 'crewgrid-placed' : ''" class="crewgrid-popover crewgrid-popover-right">
+                <div x-ref="panel" x-show="open" x-cloak :class="placed ? 'crewgrid-placed' : ''" :style="placed ? { top: pos.top + 'px', left: pos.left + 'px' } : {}" class="crewgrid-popover crewgrid-popover-right">
                     @foreach($pickerColumns as $pickerColumn)
                         <label class="flex items-center gap-2 whitespace-nowrap py-0.5 text-sm text-gray-700" wire:key="crewgrid-pick-{{ $pickerColumn->key() }}">
                             <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" wire:click="toggleColumn('{{ $pickerColumn->key() }}')" @checked(!$this->isColumnHidden($pickerColumn->key()))>
@@ -95,7 +95,7 @@
                                     <a href="#" x-ref="trigger" @click.prevent="toggle()" title="Filter" class="{{ $filterActive ? 'text-indigo-600' : 'text-gray-400' }}">
                                         {!! $this->icon('filter') !!}
                                     </a>
-                                    <div x-ref="panel" x-show="open" x-cloak :class="placed ? 'crewgrid-placed' : ''" class="crewgrid-popover">
+                                    <div x-ref="panel" x-show="open" x-cloak :class="placed ? 'crewgrid-placed' : ''" :style="placed ? { top: pos.top + 'px', left: pos.left + 'px' } : {}" class="crewgrid-popover">
                                         @if($column->filterType === 'text')
                                             <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Filter {{ $column->label }} ..." wire:model.live.debounce.400ms="filters.{{ $column->key() }}" x-ref="input" x-effect="if (open) $nextTick(() => $refs.input.focus())">
                                         @elseif($column->filterType === 'multiselect')

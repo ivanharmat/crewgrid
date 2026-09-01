@@ -151,6 +151,11 @@
         return {
             open: false,
             placed: false,
+            /* Coordinates live in state and are bound with :style, not written
+               onto the element: Livewire morphs the header on every keystroke
+               and re-render, which would wipe an inline style and drop the
+               panel into the corner of the page. */
+            pos: { top: 0, left: 0 },
             q: '',
 
             toggle() {
@@ -182,6 +187,7 @@
                 }
                 var rect = trigger.getBoundingClientRect();
                 var margin = 4;
+                /* Measure where it will be drawn, not where it sits now. */
                 var edge = 8;
                 var height = panel.offsetHeight;
                 var width = panel.offsetWidth;
@@ -195,8 +201,7 @@
                 var left = align === 'right' ? rect.right - width : rect.left - edge;
                 left = Math.max(edge, Math.min(left, window.innerWidth - width - edge));
 
-                panel.style.top = top + 'px';
-                panel.style.left = left + 'px';
+                this.pos = { top: top, left: left };
                 this.placed = true;
             },
         };
