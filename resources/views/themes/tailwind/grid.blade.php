@@ -105,7 +105,12 @@
                                             @if(count($filterOptions) > 8)
                                                 <input type="text" class="{{ $this->uiClass('input') }} mb-2" placeholder="Find ..." x-model="q">
                                             @endif
-                                            <div class="crewgrid-options">
+                                            <div class="crewgrid-options" x-data="{ options: @js(collect($filterOptions)->map(fn ($label, $value) => ['value' => (string) $value, 'label' => Str::lower((string) $label)])->values()->all()), visible() { return this.options.filter(o => this.q === '' || o.label.includes(this.q.toLowerCase())); }, allOn() { const sel = this.$wire.filters['{{ $column->key() }}'] || {}; const v = this.visible(); return v.length > 0 && v.every(o => !!sel[o.value]); } }">
+                                                {{-- ticks or unticks every option the list is showing --}}
+                                                <label class="flex items-center gap-2 whitespace-nowrap py-0.5 font-normal text-gray-700 crewgrid-select-all">
+                                                    <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" :checked="allOn()" @click.prevent="$wire.toggleAllFilterOptions('{{ $column->key() }}', q)" title="Select all shown">
+                                                    <em>All</em>
+                                                </label>
                                                 @foreach($filterOptions as $optionValue => $optionLabel)
                                                     <label class="flex items-center gap-2 whitespace-nowrap py-0.5 font-normal text-gray-700" data-label="{{ Str::lower($optionLabel) }}" x-show="q === '' || $el.dataset.label.includes(q.toLowerCase())">
                                                         <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" wire:model.live="filters.{{ $column->key() }}.{{ $optionValue }}">

@@ -357,6 +357,44 @@ abstract class Grid extends Component
         $this->resetRows();
     }
 
+    /**
+     * The "All" box in a checkbox-list popover: ticks every option the popover
+     * is showing - all of them, or the ones matching what was typed in its
+     * find box - or, when they are all ticked already, unticks them. Options
+     * the find box is hiding keep their state.
+     */
+    public function toggleAllFilterOptions(string $key, string $find = ''): void
+    {
+        $column = collect($this->columns())->first(fn (Column $column) => $column->key() === $key && $column->filterType === 'multiselect');
+        if (is_null($column)) {
+            return;
+        }
+
+        $find = mb_strtolower(trim($find));
+        $visible = [];
+        foreach ($column->resolveFilterOptions() as $value => $label) {
+            if ($find === '' || str_contains(mb_strtolower((string) $label), $find)) {
+                $visible[] = $value;
+            }
+        }
+        if ($visible === []) {
+            return;
+        }
+
+        $selected = is_array($this->filters[$key] ?? null) ? $this->filters[$key] : [];
+        $allOn = collect($visible)->every(fn ($value) => (bool) ($selected[$value] ?? false));
+        foreach ($visible as $value) {
+            if ($allOn) {
+                unset($selected[$value]);
+            } else {
+                $selected[$value] = true;
+            }
+        }
+
+        $this->filters[$key] = $selected;
+        $this->resetRows();
+    }
+
     public function loadMore(): void
     {
         $this->infiniteLoaded = max($this->effectivePerPage(), $this->infiniteLoaded) + $this->effectivePerPage();

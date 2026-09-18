@@ -81,6 +81,7 @@
     .crewgrid-popover.crewgrid-placed { visibility: visible; }
 
     .crewgrid-popover .crewgrid-options { max-height: 240px; overflow-y: auto; }
+    .crewgrid-popover .crewgrid-select-all { border-bottom: 1px solid #eee; margin-bottom: 4px; padding-bottom: 4px; }
     .crewgrid-popover-footer { border-top: 1px solid #eee; margin-top: 8px; padding-top: 6px; }
 
     /* One line per cell, so rows stay the same height and a column can be

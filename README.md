@@ -98,7 +98,7 @@ That's it — sorting, filtering, quick search, pagination and URL state all wor
 | `->sortable(?Closure $callback)` | Header click sorts. Optional callback: `fn ($query, $direction)` for custom order logic. |
 | `->searchable()` | Include the field in the grid-wide quick search box. |
 | `->filterText(?Closure $callback)` | Funnel popover with a text input (`LIKE %…%` by default). |
-| `->filterMultiSelect($options, ?Closure $callback)` | Checkbox-list popover. `$options` is `[value => label]` or a closure returning it; lists over 8 options get a find-box. Callback receives `fn ($query, array $selectedValues)`. |
+| `->filterMultiSelect($options, ?Closure $callback)` | Checkbox-list popover. `$options` is `[value => label]` or a closure returning it; lists over 8 options get a find-box, and an **All** box at the top ticks or unticks every option shown (with the find-box, just the matches). Callback receives `fn ($query, array $selectedValues)`. |
 | `->filterDateRange(?Closure $callback)` | From/To date popover. Callback receives `fn ($query, array $value)` with `from`/`to` keys — useful for unix-timestamp columns. |
 | `->format(Closure $callback)` | Transform the cell value: `fn ($value, $row)`. |
 | `->html()` | Render the formatted value as raw HTML (you escape user data). |

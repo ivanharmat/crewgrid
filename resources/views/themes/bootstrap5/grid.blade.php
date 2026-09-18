@@ -106,7 +106,12 @@
                                             @if(count($filterOptions) > 8)
                                                 <input type="text" class="{{ $this->uiClass('input') }} mb-2" placeholder="Find ..." x-model="q">
                                             @endif
-                                            <div class="crewgrid-options">
+                                            <div class="crewgrid-options" x-data="{ options: @js(collect($filterOptions)->map(fn ($label, $value) => ['value' => (string) $value, 'label' => Str::lower((string) $label)])->values()->all()), visible() { return this.options.filter(o => this.q === '' || o.label.includes(this.q.toLowerCase())); }, allOn() { const sel = this.$wire.filters['{{ $column->key() }}'] || {}; const v = this.visible(); return v.length > 0 && v.every(o => !!sel[o.value]); } }">
+                                                {{-- ticks or unticks every option the list is showing --}}
+                                                <div class="form-check crewgrid-select-all">
+                                                    <input class="form-check-input" type="checkbox" id="crewgrid-{{ $column->key() }}-all" :checked="allOn()" @click.prevent="$wire.toggleAllFilterOptions('{{ $column->key() }}', q)" title="Select all shown">
+                                                    <label class="form-check-label" for="crewgrid-{{ $column->key() }}-all"><em>All</em></label>
+                                                </div>
                                                 @foreach($filterOptions as $optionValue => $optionLabel)
                                                     <div class="form-check" data-label="{{ Str::lower($optionLabel) }}" x-show="q === '' || $el.dataset.label.includes(q.toLowerCase())">
                                                         <input class="form-check-input" type="checkbox" id="crewgrid-{{ $column->key() }}-{{ $optionValue }}" wire:model.live="filters.{{ $column->key() }}.{{ $optionValue }}">

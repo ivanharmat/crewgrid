@@ -354,6 +354,32 @@ class GridTest extends TestCase
         $this->assertSame(['ORD-002', 'ORD-003'], collect($component->viewData('rows')->items())->pluck('reference')->all());
     }
 
+    public function test_the_all_box_ticks_the_shown_options_and_unticks_them_again(): void
+    {
+        // every option: Acme, Bravo, Cedar & Sons
+        $component = Livewire::test(OrdersGrid::class)->call('toggleAllFilterOptions', 'customer');
+        $component->assertSet('filters.customer', ['Acme' => true, 'Bravo' => true, 'Cedar & Sons' => true]);
+        $this->assertCount(4, $component->viewData('rows')->items());
+
+        // all on already: the same click turns them off
+        $component->call('toggleAllFilterOptions', 'customer')->assertSet('filters.customer', []);
+        $this->assertCount(4, $component->viewData('rows')->items());
+
+        // with something typed in the find box, only the matches are touched - and what was ticked stays ticked
+        $component->set('filters.customer', ['Bravo' => true])->call('toggleAllFilterOptions', 'customer', 'ac');
+        $component->assertSet('filters.customer', ['Bravo' => true, 'Acme' => true]);
+        $this->assertSame(['ORD-001', 'ORD-002', 'ORD-003'], collect($component->viewData('rows')->items())->pluck('reference')->all());
+        $component->call('toggleAllFilterOptions', 'customer', 'AC')->assertSet('filters.customer', ['Bravo' => true]);
+
+        // a find with no matches, an unknown column or a non-list filter changes nothing
+        $component->call('toggleAllFilterOptions', 'customer', 'zzz')->assertSet('filters.customer', ['Bravo' => true]);
+        $component->call('toggleAllFilterOptions', 'nope')->assertSet('filters.customer', ['Bravo' => true]);
+        $component->call('toggleAllFilterOptions', 'reference')->assertSet('filters.customer', ['Bravo' => true]);
+
+        // the popover carries the box
+        $component->assertSeeHtml("toggleAllFilterOptions('customer', q)");
+    }
+
     public function test_clear_filters_restores_the_full_set(): void
     {
         $component = Livewire::test(OrdersGrid::class)

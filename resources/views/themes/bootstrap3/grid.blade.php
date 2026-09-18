@@ -106,7 +106,13 @@
                                             @if(count($filterOptions) > 8)
                                                 <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Find ..." x-model="q" style="margin-bottom: 6px;">
                                             @endif
-                                            <div class="crewgrid-options">
+                                            <div class="crewgrid-options" x-data="{ options: @js(collect($filterOptions)->map(fn ($label, $value) => ['value' => (string) $value, 'label' => Str::lower((string) $label)])->values()->all()), visible() { return this.options.filter(o => this.q === '' || o.label.includes(this.q.toLowerCase())); }, allOn() { const sel = this.$wire.filters['{{ $column->key() }}'] || {}; const v = this.visible(); return v.length > 0 && v.every(o => !!sel[o.value]); } }">
+                                                {{-- ticks or unticks every option the list is showing --}}
+                                                <div class="checkbox crewgrid-select-all">
+                                                    <label>
+                                                        <input type="checkbox" :checked="allOn()" @click.prevent="$wire.toggleAllFilterOptions('{{ $column->key() }}', q)" title="Select all shown"> <em>All</em>
+                                                    </label>
+                                                </div>
                                                 @foreach($filterOptions as $optionValue => $optionLabel)
                                                     <div class="checkbox" data-label="{{ Str::lower($optionLabel) }}" x-show="q === '' || $el.dataset.label.includes(q.toLowerCase())">
                                                         <label>
