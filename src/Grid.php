@@ -223,20 +223,48 @@ abstract class Grid extends Component
      */
     public function mount(): void
     {
-        if (! $this->remembersView()) {
-            return;
-        }
+        if ($this->remembersView()) {
+            $stored = $this->preferences()['view'];
+            $named = request()->query();
+            $this->viewRestored = $stored !== [];
 
-        $stored = $this->preferences()['view'];
-        $named = request()->query();
-        $this->viewRestored = $stored !== [];
-
-        foreach ($this->rememberedProperties() as $property => $parameter) {
-            if (array_key_exists($parameter, $named) || ! array_key_exists($property, $stored)) {
-                continue;
+            foreach ($this->rememberedProperties() as $property => $parameter) {
+                if (array_key_exists($parameter, $named) || ! array_key_exists($property, $stored)) {
+                    continue;
+                }
+                $this->{$property} = $stored[$property];
             }
-            $this->{$property} = $stored[$property];
         }
+
+        $this->normalizeCheckboxFilters();
+    }
+
+    /**
+     * A checkbox-list filter read from the query string arrives as text -
+     * ?f[status][open]=false is the string "false" - and a remembered view
+     * can carry the same text where it was saved from one. Text is truthy
+     * whatever it says, so an unticked box would count as ticked and the
+     * filter would quietly let everything through. Turned back into real
+     * booleans here, once, so the query, the funnel highlight, the All box
+     * and the checkboxes themselves all read the same state.
+     */
+    protected function normalizeCheckboxFilters(): void
+    {
+        foreach ($this->columns() as $column) {
+            $value = $this->filters[$column->key()] ?? null;
+            if ($column->filterType === 'multiselect' && is_array($value)) {
+                $this->filters[$column->key()] = array_map(fn ($ticked) => self::isTicked($ticked), $value);
+            }
+        }
+    }
+
+    /**
+     * Whether one checkbox-list option is ticked: true, 1, "1", "true", "on"
+     * and "yes" are; false, 0, "0", "false", "" and anything else are not.
+     */
+    protected static function isTicked(mixed $value): bool
+    {
+        return is_string($value) ? filter_var($value, FILTER_VALIDATE_BOOLEAN) : (bool) $value;
     }
 
     /**
@@ -382,7 +410,7 @@ abstract class Grid extends Component
         }
 
         $selected = is_array($this->filters[$key] ?? null) ? $this->filters[$key] : [];
-        $allOn = collect($visible)->every(fn ($value) => (bool) ($selected[$value] ?? false));
+        $allOn = collect($visible)->every(fn ($value) => self::isTicked($selected[$value] ?? false));
         foreach ($visible as $value) {
             if ($allOn) {
                 unset($selected[$value]);
@@ -443,8 +471,9 @@ abstract class Grid extends Component
 
             if ($column->filterType === 'multiselect') {
                 // Checkboxes bind a per-option map {value: bool}; only arrays
-                // count (a stray scalar from a hand-edited URL is ignored).
-                $selected = is_array($value) ? array_keys(array_filter($value)) : [];
+                // count (a stray scalar from a hand-edited URL is ignored), and
+                // an option counts only when ticked - "false" text included.
+                $selected = is_array($value) ? array_keys(array_filter($value, fn ($ticked) => self::isTicked($ticked))) : [];
                 if ($selected === []) {
                     continue;
                 }
@@ -562,7 +591,7 @@ abstract class Grid extends Component
         $value = $this->filters[$column->key()] ?? null;
 
         return match ($column->filterType) {
-            'multiselect' => is_array($value) && count(array_filter($value)) > 0,
+            'multiselect' => is_array($value) && count(array_filter($value, fn ($ticked) => self::isTicked($ticked))) > 0,
             'date_range' => is_array($value) && (! empty($value['from']) || ! empty($value['to'])),
             'text' => is_string($value) && trim($value) !== '',
             'number' => is_array($value) && trim((string) ($value['value'] ?? '')) !== '',

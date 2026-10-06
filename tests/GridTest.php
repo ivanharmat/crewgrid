@@ -354,6 +354,37 @@ class GridTest extends TestCase
         $this->assertSame(['ORD-002', 'ORD-003'], collect($component->viewData('rows')->items())->pluck('reference')->all());
     }
 
+    public function test_an_unticked_box_in_a_link_stays_unticked(): void
+    {
+        // the query string carries checkbox state as text, and "false" is truthy text
+        $linked = Livewire::withQueryParams(['f' => ['customer' => ['Acme' => 'false', 'Bravo' => 'true', 'Cedar & Sons' => 'false']]])
+            ->test(ForgetfulOrdersGrid::class)
+            ->assertSet('filters.customer', ['Acme' => false, 'Bravo' => true, 'Cedar & Sons' => false]);
+        $this->assertSame(['ORD-002'], collect($linked->viewData('rows')->items())->pluck('reference')->all());
+
+        $customer = collect($linked->instance()->visibleColumns())->first(fn (Column $column) => $column->key() === 'customer');
+        $this->assertTrue($linked->instance()->hasActiveFilter($customer));
+
+        // every box unticked is no filter at all - not every box ticked
+        $none = Livewire::withQueryParams(['f' => ['customer' => ['Acme' => 'false', 'Bravo' => '0']]])->test(OrdersGrid::class);
+        $this->assertCount(4, $none->viewData('rows')->items());
+        $this->assertFalse($none->instance()->hasActiveFilter($customer));
+
+        // and the All box reads them as off, so its click ticks everything rather than clearing
+        $none->call('toggleAllFilterOptions', 'customer')
+            ->assertSet('filters.customer', ['Acme' => true, 'Bravo' => true, 'Cedar & Sons' => true]);
+    }
+
+    public function test_a_remembered_view_saved_with_text_checkboxes_comes_back_as_real_ones(): void
+    {
+        config()->set('crewgrid.remember_view', true);
+        $name = Livewire::test(OrdersGrid::class)->instance()->getName();
+        session()->put('crewgrid.'.$name, ['view' => ['filters' => ['customer' => ['Acme' => 'true', 'Bravo' => 'false']]]]);
+
+        $returning = Livewire::test(OrdersGrid::class)->assertSet('filters.customer', ['Acme' => true, 'Bravo' => false]);
+        $this->assertSame(['ORD-001', 'ORD-003'], collect($returning->viewData('rows')->items())->pluck('reference')->all());
+    }
+
     public function test_the_all_box_ticks_the_shown_options_and_unticks_them_again(): void
     {
         // every option: Acme, Bravo, Cedar & Sons
