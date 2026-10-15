@@ -52,6 +52,41 @@ class GridTest extends TestCase
         vertical-align: bottom;', $html, 'Headers are not truncated.');
     }
 
+    public function test_the_header_is_navy_in_every_theme_by_default(): void
+    {
+        foreach (['bootstrap3', 'bootstrap5', 'tailwind'] as $theme) {
+            config(['crewgrid.theme' => $theme]);
+            $html = Livewire::test(OrdersGrid::class)->set('filters.reference', 'ORD')->html();
+
+            $this->assertStringContainsString('crewgrid-head-dark', $this->tableTag($html), $theme);
+            $this->assertStringContainsString('--crewgrid-head-bg: #1e293b;', $html, $theme);
+            // the framework's link / primary / muted colours vanish on navy - the funnel is coloured by the grid's own classes
+            $this->assertStringContainsString('class="crewgrid-filter-trigger crewgrid-filter-active ', $html, $theme.': an active filter is marked.');
+            $this->assertDoesNotMatchRegularExpression('/crewgrid-filter-trigger[^"]*(text-primary|text-muted|text-indigo-600|text-gray-400)/', $html, $theme);
+            $this->assertStringContainsString('crewgrid-sort-link', $html, $theme);
+            $this->assertDoesNotMatchRegularExpression('/<th [^>]*text-gray-700/', $html, $theme.': no grey labels on navy.');
+            // the popover sits in the header cell and must not inherit white text
+            $this->assertStringContainsString('.crewgrid-head-dark .crewgrid-popover { color: #333;', $html, $theme);
+        }
+    }
+
+    public function test_the_light_header_keeps_the_framework_colours(): void
+    {
+        config(['crewgrid.header' => 'light']);
+        foreach (['bootstrap3' => 'text-primary', 'bootstrap5' => 'text-primary', 'tailwind' => 'text-indigo-600'] as $theme => $active) {
+            config(['crewgrid.theme' => $theme]);
+            $html = Livewire::test(OrdersGrid::class)->set('filters.reference', 'ORD')->html();
+
+            $this->assertStringContainsString('crewgrid-head-light', $this->tableTag($html), $theme);
+            $this->assertMatchesRegularExpression('/crewgrid-filter-trigger crewgrid-filter-active\s+'.$active.'/', $html, $theme);
+        }
+
+        // a grid can pick its own, and a style nobody knows reads as dark
+        config(['crewgrid.theme' => 'bootstrap3', 'crewgrid.header' => 'dark']);
+        $this->assertStringContainsString('crewgrid-head-light', $this->tableTag(Livewire::test(OrdersGrid::class)->set('header', 'light')->html()));
+        $this->assertStringContainsString('crewgrid-head-dark', $this->tableTag(Livewire::test(OrdersGrid::class)->set('header', 'purple')->html()));
+    }
+
     public function test_dragged_widths_clip_instead_of_spilling_over_the_next_column(): void
     {
         // an unsized grid lays out to content: nothing is cut off

@@ -41,6 +41,41 @@
         white-space: nowrap;
     }
 
+    /* The dark header (crewgrid.header = "dark", the default): navy with
+       white labels in every theme. The colors are custom properties so a
+       host can retune them without restating the rules. Sort links and the
+       filter funnel are recoloured here because the frameworks' own link,
+       primary and muted colours vanish on navy; an active filter turns amber.
+       The filter popover lives inside the header cell, so it sets its own
+       text colour back or it would inherit white on white. */
+    .crewgrid-table {
+        --crewgrid-head-bg: #1e293b;
+        --crewgrid-head-border: #0f172a;
+        --crewgrid-head-color: #ffffff;
+        --crewgrid-head-muted: rgba(255, 255, 255, .55);
+        --crewgrid-head-accent: #fbbf24;
+        --crewgrid-head-line: rgba(255, 255, 255, .14);
+    }
+    .crewgrid-head-dark > thead > tr > th {
+        background: var(--crewgrid-head-bg);
+        color: var(--crewgrid-head-color);
+        border-bottom: 2px solid var(--crewgrid-head-border);
+        font-weight: 600;
+    }
+    .crewgrid-head-dark .crewgrid-sort-link,
+    .crewgrid-head-dark .crewgrid-sort-link:focus {
+        color: var(--crewgrid-head-color);
+        text-decoration: none;
+    }
+    .crewgrid-head-dark .crewgrid-sort-link:hover { color: var(--crewgrid-head-accent); text-decoration: none; }
+    .crewgrid-head-dark .crewgrid-filter-trigger { color: var(--crewgrid-head-muted); }
+    .crewgrid-head-dark .crewgrid-filter-trigger:hover,
+    .crewgrid-head-dark .crewgrid-filter-trigger:focus { color: var(--crewgrid-head-color); }
+    .crewgrid-head-dark .crewgrid-filter-trigger.crewgrid-filter-active { color: var(--crewgrid-head-accent); }
+    .crewgrid-head-dark.crewgrid-bordered > thead > tr > th { border-right-color: var(--crewgrid-head-line); }
+    .crewgrid-head-dark .crewgrid-resizer:hover::after { background: var(--crewgrid-head-accent); }
+    .crewgrid-head-dark .crewgrid-popover { color: #333; font-weight: normal; }
+
     /* Headers are never shortened: a column whose name reads "Divis..." has
        lost the one thing it has to tell you. It sets the column's floor
        width instead, and the table scrolls if that makes it wide. */

@@ -18,6 +18,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Header
+    |--------------------------------------------------------------------------
+    |
+    | "dark" paints the header row navy with white labels in every theme;
+    | "light" keeps the framework's own grey header. Any grid can override
+    | this via its $header property. The dark colors are CSS custom properties
+    | (--crewgrid-head-bg and friends) a host stylesheet can change.
+    |
+    */
+
+    'header' => env('CREWGRID_HEADER', 'dark'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Defaults
     |--------------------------------------------------------------------------
     */

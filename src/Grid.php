@@ -153,6 +153,9 @@ abstract class Grid extends Component
     /** Override to force a theme for this grid ("bootstrap3", "tailwind", ...). */
     public ?string $theme = null;
 
+    /** Override the header style for this grid ("dark" or "light"). Null falls back to config. */
+    public ?string $header = null;
+
     /** Whether this grid offers an Excel export. Null falls back to config. */
     public ?bool $exportable = null;
 
@@ -702,6 +705,17 @@ abstract class Grid extends Component
     public function resolvedTheme(): string
     {
         return $this->theme ?? (string) config('crewgrid.theme', 'bootstrap3');
+    }
+
+    /**
+     * The header row's look: "dark" (navy, the default) or "light" (the
+     * framework's own grey header). Anything else reads as dark.
+     */
+    public function headerStyle(): string
+    {
+        $style = $this->header ?? (string) config('crewgrid.header', 'dark');
+
+        return in_array($style, ['dark', 'light'], true) ? $style : 'dark';
     }
 
     /**

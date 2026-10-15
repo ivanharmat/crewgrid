@@ -59,7 +59,7 @@
         @include('crewgrid::themes.tailwind.pager')
     @endif
     <div class="overflow-x-auto crewgrid-scroll" @pointerdown="start($event)">
-        <table class="w-full text-left text-sm crewgrid-table crewgrid-plain {{ $this->isBordered() ? 'crewgrid-bordered' : '' }} {{ $this->hasFixedLayout() ? 'crewgrid-fixed' : '' }}">
+        <table class="w-full text-left text-sm crewgrid-table crewgrid-plain crewgrid-head-{{ $this->headerStyle() }} {{ $this->isBordered() ? 'crewgrid-bordered' : '' }} {{ $this->hasFixedLayout() ? 'crewgrid-fixed' : '' }}">
             {{-- Server-rendered, so widths survive a morph and the column set can
                  change when columns are hidden. --}}
             <colgroup>
@@ -71,13 +71,13 @@
             <thead>
                 <tr>
                     @foreach($columns as $column)
-                        <th wire:key="crewgrid-head-{{ $column->key() }}" class="font-semibold text-gray-700 {{ $column->cssClass() }}">
+                        <th wire:key="crewgrid-head-{{ $column->key() }}" class="font-semibold {{ $this->headerStyle() === 'light' ? 'text-gray-700' : '' }} {{ $column->cssClass() }}">
                             {{-- Only the label truncates. The filter sits outside this
                                  wrapper so its popover is never clipped by the ellipsis. --}}
                             <span class="crewgrid-th-label">
                                 @if(!is_null($column->icon)){!! $column->icon !!} @endif
                                 @if($column->sortable)
-                                    <a href="#" class="hover:underline" wire:click.prevent="sortBy('{{ $column->key() }}')">
+                                    <a href="#" class="crewgrid-sort-link hover:underline" wire:click.prevent="sortBy('{{ $column->key() }}')">
                                         {{ $column->label }}
                                         @if($sortField === $column->key())
                                             {!! $this->icon($sortDirection === 'asc' ? 'sort_asc' : 'sort_desc') !!}
@@ -95,7 +95,7 @@
                                     $filterOptions = $column->filterType === 'multiselect' ? $column->resolveFilterOptions() : [];
                                 @endphp
                                 <div x-data="crewGridPopover()" @click.outside="close()" @scroll.window="reposition()" @resize.window="reposition()" class="crewgrid-th-filter">
-                                    <a href="#" x-ref="trigger" @click.prevent="toggle()" title="Filter" class="{{ $filterActive ? 'text-indigo-600' : 'text-gray-400' }}">
+                                    <a href="#" x-ref="trigger" @click.prevent="toggle()" title="Filter" class="crewgrid-filter-trigger {{ $filterActive ? 'crewgrid-filter-active' : '' }} {{ $this->headerStyle() === 'light' ? ($filterActive ? 'text-indigo-600' : 'text-gray-400') : '' }}">
                                         {!! $this->icon('filter') !!}
                                     </a>
                                     <div x-ref="panel" x-show="open" x-cloak :class="placed ? 'crewgrid-placed' : ''" :style="placed ? { top: pos.top + 'px', left: pos.left + 'px' } : {}" class="crewgrid-popover">
