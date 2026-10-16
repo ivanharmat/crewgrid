@@ -82,12 +82,24 @@
     .crewgrid-th-label {
         display: inline-block;
         vertical-align: bottom;
+        min-width: 0;
+    }
+
+    /* The label (and its sort arrow) at the left of the cell, the filter
+       funnel at the right - the funnels line up down the header instead of
+       trailing each label at a different spot. A flex row inside the cell,
+       since the cell itself has to stay a table cell. */
+    .crewgrid-th-inner {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 6px;
     }
 
     .crewgrid-th-filter {
         position: relative;
         display: inline-block;
-        margin-left: 4px;
+        flex: 0 0 auto;
     }
 
     /* Fixed, not absolute: the grid sits inside a horizontally scrolling
@@ -147,7 +159,7 @@
     }
     .crewgrid-table.crewgrid-fixed > tbody > tr > td.crewgrid-wrap { overflow: visible; }
     .crewgrid-table.crewgrid-fixed .crewgrid-th-label {
-        max-width: calc(100% - 20px);
+        flex: 0 1 auto;
         overflow: hidden;
         text-overflow: ellipsis;
     }

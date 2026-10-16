@@ -70,6 +70,20 @@ class GridTest extends TestCase
         }
     }
 
+    public function test_the_filter_funnel_sits_at_the_right_of_its_header_cell(): void
+    {
+        foreach (['bootstrap3', 'bootstrap5', 'tailwind'] as $theme) {
+            config(['crewgrid.theme' => $theme]);
+            $html = Livewire::test(OrdersGrid::class)->html();
+
+            // label first, funnel after it, both inside the one flex row (Livewire's block markers may sit between)
+            $this->assertMatchesRegularExpression('/<div class="crewgrid-th-inner">\s*<span class="crewgrid-th-label">.*?<\/span>(?:\s|<!--.*?-->)*<div x-data="crewGridPopover\(\)"[^>]*class="crewgrid-th-filter">/s', $html, $theme);
+            $this->assertStringContainsString("justify-content: space-between;", $html, $theme);
+            // a header without a filter still gets the row, the label alone at the left
+            $this->assertSame(substr_count($html, '<th wire:key='), substr_count($html, '<div class="crewgrid-th-inner">'), $theme);
+        }
+    }
+
     public function test_the_light_header_keeps_the_framework_colours(): void
     {
         config(['crewgrid.header' => 'light']);

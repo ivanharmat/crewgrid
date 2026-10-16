@@ -74,6 +74,8 @@
                         <th wire:key="crewgrid-head-{{ $column->key() }}" class="font-semibold {{ $this->headerStyle() === 'light' ? 'text-gray-700' : '' }} {{ $column->cssClass() }}">
                             {{-- Only the label truncates. The filter sits outside this
                                  wrapper so its popover is never clipped by the ellipsis. --}}
+                            {{-- label and sort arrow at the left, the filter funnel pushed to the right --}}
+                            <div class="crewgrid-th-inner">
                             <span class="crewgrid-th-label">
                                 @if(!is_null($column->icon)){!! $column->icon !!} @endif
                                 @if($column->sortable)
@@ -133,6 +135,7 @@
                                     </div>
                                 </div>
                             @endif
+                            </div>
                             @if($column->resizable && !$loop->last)
                                 <span class="crewgrid-resizer" data-crewgrid-col="{{ $column->key() }}" title="Drag to resize"></span>
                             @endif
