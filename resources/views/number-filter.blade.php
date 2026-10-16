@@ -6,4 +6,4 @@
         <option value="{{ $operatorValue }}">{{ $operatorLabel }}</option>
     @endforeach
 </select>
-<input type="number" step="any" class="{{ $this->uiClass('input') }}" placeholder="Number ..." wire:model.live.debounce.400ms="filters.{{ $column->key() }}.value">
+<input type="number" step="any" class="{{ $this->uiClass('input') }}" placeholder="Number ..." wire:model.live.debounce.700ms="filters.{{ $column->key() }}.value">

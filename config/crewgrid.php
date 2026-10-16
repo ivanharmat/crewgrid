@@ -75,14 +75,12 @@ return [
     |--------------------------------------------------------------------------
     |
     | "bordered" draws column borders and row lines; any grid can override it
-    | via its $bordered property. "min_column_width" is the floor a column can
-    | be dragged down to, in pixels.
+    | via its $bordered property.
     |
     */
 
     'bordered' => true,
 
-    'min_column_width' => 60,
 
     /*
     |--------------------------------------------------------------------------
@@ -128,7 +126,7 @@ return [
     | against). Override the keys you need for a different set - values are
     | markup, not class names, so inline SVG works too. Map a key to '' and
     | that spot renders nothing. Keys: filter, columns, clear, show_all,
-    | resize, load_more, loading, sort, sort_asc, sort_desc - see
+    | load_more, loading, sort, sort_asc, sort_desc - see
     | CrewGrid\Grid::DEFAULT_ICONS.
     |
     |     'icons' => [

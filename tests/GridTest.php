@@ -101,22 +101,29 @@ class GridTest extends TestCase
         $this->assertStringContainsString('crewgrid-head-dark', $this->tableTag(Livewire::test(OrdersGrid::class)->set('header', 'purple')->html()));
     }
 
-    public function test_dragged_widths_clip_instead_of_spilling_over_the_next_column(): void
+    public function test_resizing_is_retired_and_only_declared_widths_fix_the_layout(): void
     {
-        // an unsized grid lays out to content: nothing is cut off
+        // an unsized grid lays out to content: nothing is cut off, and none
+        // of the retired resizer's parts render
         $html = Livewire::test(OrdersGrid::class)->html();
         $this->assertStringNotContainsString('crewgrid-fixed', $this->tableTag($html));
+        $this->assertStringNotContainsString('crewgrid-resizer', $html);
+        $this->assertStringNotContainsString('crewGridResize', $html);
+        $this->assertStringNotContainsString('Reset Widths', $html);
 
-        // once a width is stored the table is fixed-layout, where a cell or a
-        // header narrower than its text must be clipped, not spill sideways
+        // the fixed-layout clipping styles stay for columns that declare widths
         $this->assertStringContainsString('.crewgrid-table.crewgrid-fixed > tbody > tr > td {', $html);
         $this->assertStringContainsString('.crewgrid-table.crewgrid-fixed .crewgrid-th-label {', $html);
+    }
 
-        $sized = Livewire::test(OrdersGrid::class)->call('setColumnWidths', ['total' => 90]);
-        $this->assertStringContainsString('crewgrid-fixed', $this->tableTag($sized->html()), 'A stored width puts the table in fixed layout.');
+    public function test_widths_stored_by_the_retired_resizer_are_ignored(): void
+    {
+        // a session that still carries dragged widths from before the removal
+        session()->put('crewgrid.'.(new OrdersGrid)->getName(), ['widths' => ['total' => 90]]);
 
-        $sized->call('resetColumnWidths');
-        $this->assertStringNotContainsString('crewgrid-fixed', $this->tableTag($sized->html()), 'Reset Widths goes back to content-sized columns.');
+        $html = Livewire::test(OrdersGrid::class)->html();
+        $this->assertStringNotContainsString('crewgrid-fixed', $this->tableTag($html));
+        $this->assertStringNotContainsString('width: 90px', $html);
     }
 
     /**
@@ -315,8 +322,7 @@ class GridTest extends TestCase
         $this->assertArrayNotHasKey('page', $stored['view']);
         $this->assertSame('total', $stored['view']['sortField']);
 
-        // and it sits beside the widths and hidden columns, not instead of them
-        $this->assertArrayHasKey('widths', $stored);
+        // and it sits beside the hidden columns, not instead of them
         $this->assertArrayHasKey('hidden', $stored);
     }
 
@@ -483,20 +489,6 @@ class GridTest extends TestCase
 
         $component->call('showAllColumns');
         $this->assertCount(6, $component->viewData('columns'));
-    }
-
-    public function test_dragged_widths_are_clamped_and_resettable(): void
-    {
-        $component = Livewire::test(OrdersGrid::class)
-            ->call('setColumnWidths', ['reference' => 220, 'customer' => 5, 'bogus' => 300]);
-
-        $html = $component->html();
-        $this->assertStringContainsString('width: 220px', $html);
-        $this->assertStringContainsString('width: 60px', $html, 'A width below the floor clamps to min_column_width.');
-        $this->assertStringNotContainsString('bogus', $html);
-
-        $component->call('resetColumnWidths');
-        $this->assertStringNotContainsString('width: 220px', $component->html());
     }
 
     public function test_each_shipped_theme_renders_and_an_unknown_theme_throws(): void

@@ -51,7 +51,6 @@ class Column
 
     public bool $wrap = false;
 
-    public bool $resizable = true;
 
     /** Markup rendered before the header label - author markup, not escaped. */
     public ?string $icon = null;
@@ -177,8 +176,7 @@ class Column
     }
 
     /**
-     * Starting width for the column - an int is treated as pixels. Users can
-     * still drag it from here unless the column is notResizable().
+     * Width for the column - an int is treated as pixels.
      */
     public function width(string|int $width): static
     {
@@ -220,12 +218,6 @@ class Column
         return $this;
     }
 
-    public function notResizable(): static
-    {
-        $this->resizable = false;
-
-        return $this;
-    }
 
     /**
      * An icon before the header label. Takes markup rather than a class name

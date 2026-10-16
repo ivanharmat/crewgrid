@@ -2,7 +2,7 @@
      it. Self-contained: no build step, no publishing, nothing to include in
      the host app's layout, and no dependency on the CSS framework in use -
      these rules cover the parts a framework has no opinion about (the fixed
-     layout widths need, the resize handle, popover positioning). --}}
+     layout widths need, popover positioning). --}}
 @once
 <style>
     [x-cloak] { display: none !important; }
@@ -73,7 +73,6 @@
     .crewgrid-head-dark .crewgrid-filter-trigger:focus { color: var(--crewgrid-head-color); }
     .crewgrid-head-dark .crewgrid-filter-trigger.crewgrid-filter-active { color: var(--crewgrid-head-accent); }
     .crewgrid-head-dark.crewgrid-bordered > thead > tr > th { border-right-color: var(--crewgrid-head-line); }
-    .crewgrid-head-dark .crewgrid-resizer:hover::after { background: var(--crewgrid-head-accent); }
     .crewgrid-head-dark .crewgrid-popover { color: #333; font-weight: normal; }
 
     /* Headers are never shortened: a column whose name reads "Divis..." has
@@ -148,10 +147,10 @@
         text-overflow: ellipsis;
     }
 
-    /* Dragging a column width switches the table to a fixed layout, where a
+    /* A declared column width switches the table to a fixed layout, where a
        column no longer grows to fit its contents. A cell narrower than its
        text is cut off with an ellipsis rather than spilling across its
-       neighbour - widen the column again, or Reset Widths, to read it whole.
+       neighbour - give the column more width to read it whole.
        Only in that state: an unsized grid still shows everything in full. */
     .crewgrid-table.crewgrid-fixed > tbody > tr > td {
         overflow: hidden;
@@ -200,29 +199,8 @@
     }
     .crewgrid-group-toolbar a { margin-left: 12px; text-decoration: none; }
 
-    .crewgrid-resizer {
-        position: absolute;
-        top: 0;
-        right: -4px;
-        width: 8px;
-        height: 100%;
-        cursor: col-resize;
-        z-index: 5;
-    }
-    .crewgrid-resizer::after {
-        content: '';
-        position: absolute;
-        top: 4px;
-        bottom: 4px;
-        left: 3px;
-        width: 2px;
-        background: transparent;
-    }
-    .crewgrid-resizer:hover::after { background: #3c8dbc; }
     /* While dragging, the pointer leaves the handle - keep the whole page in
        resize mode so the cursor does not flicker and text cannot be selected. */
-    body.crewgrid-resizing { cursor: col-resize !important; }
-    body.crewgrid-resizing * { user-select: none !important; }
 </style>
 
 <script>
@@ -294,85 +272,5 @@
         };
     };
 
-    window.crewGridResize = function (minWidth) {
-        return {
-            dragKey: null,
-            startX: 0,
-            startWidth: 0,
-
-            table() {
-                return this.$el.querySelector('table.crewgrid-table');
-            },
-
-            cols() {
-                return Array.from(this.$el.querySelectorAll('col[data-crewgrid-col]'));
-            },
-
-            colFor(key) {
-                return this.$el.querySelector('col[data-crewgrid-col="' + key + '"]');
-            },
-
-            /* Columns the author never sized are auto-laid-out. Freeze what
-               the browser worked out before switching to a fixed layout, or
-               they would all snap to equal widths the moment a drag starts. */
-            freezeWidths() {
-                var table = this.table();
-                if (!table) {
-                    return;
-                }
-                var headers = Array.from(table.querySelectorAll('thead th'));
-                this.cols().forEach(function (col, index) {
-                    if (!parseInt(col.style.width, 10) && headers[index]) {
-                        col.style.width = headers[index].offsetWidth + 'px';
-                    }
-                });
-                table.classList.add('crewgrid-fixed');
-            },
-
-            start(event) {
-                var handle = event.target.closest('.crewgrid-resizer');
-                if (!handle) {
-                    return;
-                }
-                var header = handle.closest('th');
-                if (!header || !this.colFor(handle.dataset.crewgridCol)) {
-                    return;
-                }
-                event.preventDefault();
-                this.freezeWidths();
-                this.dragKey = handle.dataset.crewgridCol;
-                this.startX = event.clientX;
-                this.startWidth = header.offsetWidth;
-                document.body.classList.add('crewgrid-resizing');
-            },
-
-            move(event) {
-                if (this.dragKey === null) {
-                    return;
-                }
-                var col = this.colFor(this.dragKey);
-                if (col) {
-                    col.style.width = Math.max(minWidth, this.startWidth + (event.clientX - this.startX)) + 'px';
-                }
-            },
-
-            stop() {
-                if (this.dragKey === null) {
-                    return;
-                }
-                this.dragKey = null;
-                document.body.classList.remove('crewgrid-resizing');
-
-                var widths = {};
-                this.cols().forEach(function (col) {
-                    var width = parseInt(col.style.width, 10);
-                    if (width > 0) {
-                        widths[col.dataset.crewgridCol] = width;
-                    }
-                });
-                this.$wire.call('setColumnWidths', widths);
-            },
-        };
-    };
 </script>
 @endonce

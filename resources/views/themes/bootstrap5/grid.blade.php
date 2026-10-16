@@ -1,9 +1,9 @@
-<div x-data="crewGridResize({{ $minColumnWidth }})" @pointermove.window="move($event)" @pointerup.window="stop()">
+<div>
     @include('crewgrid::themes.bootstrap5.assets')
     <div class="row mb-2">
         <div class="{{ $toolbarView ? 'col-sm-6' : 'col-sm-4' }} crewgrid-toolbar-start">
             @if(collect($columns)->contains(fn ($c) => $c->searchable))
-                <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Search ..." wire:model.live.debounce.400ms="search">
+                <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Search ..." wire:model.live.debounce.700ms="search">
             @endif
             @isset($toolbarView)
                 @include($toolbarView)
@@ -13,9 +13,6 @@
             <span wire:loading.delay class="text-muted small me-2">Loading {!! $this->icon('loading') !!}</span>
             @if($this->isExportable())
                 <button type="button" class="{{ $this->uiClass('button') }}" wire:click="export" wire:loading.attr="disabled" title="Export the current view to Excel - all pages, filters applied">{!! $this->icon('export') !!} Excel</button>
-            @endif
-            @if($this->hasDraggedWidths())
-                <button type="button" class="{{ $this->uiClass('button') }}" wire:click="resetColumnWidths" title="Reset column widths">{!! $this->icon('resize') !!} Reset Widths</button>
             @endif
             <div x-data="crewGridPopover('right')" @click.outside="close()" @scroll.window="reposition()" @resize.window="reposition()" class="crewgrid-th-filter">
                 <button type="button" class="{{ $this->uiClass('button') }}" x-ref="trigger" @click="toggle()" title="Show or hide columns">
@@ -58,7 +55,7 @@
     @if($loadMode !== 'infinite' && $this->showsPagerAt('top'))
         @include('crewgrid::themes.bootstrap5.pager')
     @endif
-    <div class="table-responsive crewgrid-scroll" @pointerdown="start($event)">
+    <div class="table-responsive crewgrid-scroll">
         <table class="table table-striped table-hover table-sm crewgrid-table crewgrid-head-{{ $this->headerStyle() }} {{ $this->isBordered() ? 'crewgrid-bordered' : '' }} {{ $this->hasFixedLayout() ? 'crewgrid-fixed' : '' }}">
             {{-- Server-rendered, so widths survive a morph and the column set can
                  change when columns are hidden. --}}
@@ -103,7 +100,7 @@
                                     </a>
                                     <div x-ref="panel" x-show="open" x-cloak :class="placed ? 'crewgrid-placed' : ''" :style="placed ? { top: pos.top + 'px', left: pos.left + 'px' } : {}" class="crewgrid-popover">
                                         @if($column->filterType === 'text')
-                                            <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Filter {{ $column->label }} ..." wire:model.live.debounce.400ms="filters.{{ $column->key() }}" x-ref="input" x-effect="if (open) $nextTick(() => $refs.input.focus())">
+                                            <input type="text" class="{{ $this->uiClass('input') }}" placeholder="Filter {{ $column->label }} ..." wire:model.live.debounce.700ms="filters.{{ $column->key() }}" x-ref="input" x-effect="if (open) $nextTick(() => $refs.input.focus())">
                                         @elseif($column->filterType === 'multiselect')
                                             @if(count($filterOptions) > 8)
                                                 <input type="text" class="{{ $this->uiClass('input') }} mb-2" placeholder="Find ..." x-model="q">
@@ -137,9 +134,6 @@
                                 </div>
                             @endif
                             </div>
-                            @if($column->resizable && !$loop->last)
-                                <span class="crewgrid-resizer" data-crewgrid-col="{{ $column->key() }}" title="Drag to resize"></span>
-                            @endif
                         </th>
                     @endforeach
                 </tr>

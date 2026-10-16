@@ -114,7 +114,6 @@ abstract class Grid extends Component
         'columns' => '<i class="fa fa-columns"></i>',
         'clear' => '<i class="fa fa-times"></i>',
         'show_all' => '<i class="fa fa-eye"></i>',
-        'resize' => '<i class="fa fa-arrows-h"></i>',
         'load_more' => '<i class="fa fa-angle-double-down"></i>',
         'loading' => '<i class="fa fa-spinner fa-spin"></i>',
         // crewgrid-muted rather than text-muted / text-gray-400: the icon map
@@ -559,30 +558,23 @@ abstract class Grid extends Component
     }
 
     /**
-     * Rendered width for a column: what the user dragged, else what the
-     * column declared, else nothing (the browser sizes it).
+     * Rendered width for a column: what it declared, else nothing (the
+     * browser sizes it). Drag-resizing retired Oct 2026 - it had stopped
+     * working - so widths stored by it are ignored.
      */
     public function columnWidth(Column $column): ?string
     {
-        $width = $this->preferences()['widths'][$column->key()] ?? null;
-
-        return is_null($width) ? $column->width : $width.'px';
-    }
-
-    public function hasDraggedWidths(): bool
-    {
-        return $this->preferences()['widths'] !== [];
+        return $column->width;
     }
 
     /**
      * Widths only bite under a fixed table layout, and a fixed layout with no
      * widths would make every column equal - so it is switched on only once
-     * something has a width to honour.
+     * a column declares a width to honour.
      */
     public function hasFixedLayout(): bool
     {
-        return $this->hasDraggedWidths()
-            || collect($this->visibleColumns())->contains(fn (Column $column) => ! is_null($column->width));
+        return collect($this->visibleColumns())->contains(fn (Column $column) => ! is_null($column->width));
     }
 
     /**
@@ -625,41 +617,13 @@ abstract class Grid extends Component
     }
 
     /**
-     * Persist the whole width map at the end of a drag. The browser sends
-     * every column, not just the dragged one, because the drag freezes the
-     * previously auto-sized columns at the same moment.
-     *
-     * @param  array<string, int|string>  $widths
-     */
-    public function setColumnWidths(array $widths): void
-    {
-        $minimum = (int) config('crewgrid.min_column_width', 60);
-        $keys = array_map(fn (Column $column) => $column->key(), $this->columns());
-
-        $clean = [];
-        foreach ($widths as $key => $width) {
-            if (in_array($key, $keys, true) && is_numeric($width)) {
-                $clean[$key] = max($minimum, (int) $width);
-            }
-        }
-
-        $this->writePreferences(['widths' => $clean]);
-    }
-
-    public function resetColumnWidths(): void
-    {
-        $this->writePreferences(['widths' => []]);
-    }
-
-    /**
-     * @return array{widths: array<string, int>, hidden: array<int, string>, view: array<string, mixed>}
+     * @return array{hidden: array<int, string>, view: array<string, mixed>}
      */
     protected function preferences(): array
     {
         if (is_null($this->gridPreferences)) {
             $stored = $this->loadPreferences();
             $this->gridPreferences = [
-                'widths' => is_array($stored['widths'] ?? null) ? $stored['widths'] : [],
                 'hidden' => is_array($stored['hidden'] ?? null) ? array_values($stored['hidden']) : [],
                 'view' => is_array($stored['view'] ?? null) ? $stored['view'] : [],
             ];
@@ -1030,7 +994,6 @@ abstract class Grid extends Component
             'rows' => $rows,
             'perPageOptions' => (array) config('crewgrid.per_page_options', [15, 30, 50, 100]),
             'perPageSelected' => $this->effectivePerPage(),
-            'minColumnWidth' => (int) config('crewgrid.min_column_width', 60),
             'toolbarView' => $this->toolbarView(),
         ]);
     }
